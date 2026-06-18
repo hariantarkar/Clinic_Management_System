@@ -1,15 +1,151 @@
 package com.CMS.PaitentDashboard;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.CMS.AdminDashboard.DoctorSlotRepository;
+import com.CMS.AdminSideEntity.Doctor;
+import com.CMS.AdminSideEntity.DoctorSlot;
+import com.CMS.Register.entity.Register;
+import com.CMS.RegisterRepository.RegisterRepo;
 
 @RestController
 public class PaitentController {
 
-	@GetMapping("/auth/PaitentPanel")
+	@GetMapping("/patient/profile")
 	public String PaitentProfile() {
 		return "welcome paitent profile";
 	}
 	
+	 @Autowired
+	    private PatientService patientService;
+	    @Autowired
+	    private DoctorSlotRepository slotRepository;
+
+	    @Autowired
+	    private AppointmentRepository appointmentRepository;
+
+	    @Autowired
+	    private RegisterRepo registerRepository;
+
+	    @GetMapping("/patient/ViewAlldoctors")
+	    public ResponseEntity<List<Doctor>> getAllDoctors() {
+	        return ResponseEntity.ok(patientService.getAllDoctors());
+	    }
+	    @GetMapping("/patient/doctors/search")
+	    public ResponseEntity<List<Doctor>> searchDoctors(
+	            @RequestParam(required = false) String specialization,
+	            @RequestParam(required = false) String keyword) {
+
+	        return ResponseEntity.ok(
+	                patientService.searchDoctors(specialization, keyword)
+	        );
+	    }
 	
+
+	    @PostMapping("/patient/book/{slotId}/{patientId}")
+	    public ResponseEntity<?> bookAppointment(
+	            @PathVariable Long slotId,
+	            @PathVariable Integer patientId) {
+
+	        DoctorSlot slot = slotRepository.findById(slotId)
+	                .orElseThrow(() -> new RuntimeException("Slot not found"));
+
+	        if (!slot.isAvailable()) {
+	            throw new RuntimeException("Slot already booked");
+	        }
+
+	        Register patient = registerRepository.findById(patientId)
+	                .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+	        if (patient.getUserType() != Register.UserType.patient) {
+	            throw new RuntimeException("Invalid patient account");
+	        }
+
+	        AppointmentEntity appointment = new AppointmentEntity();
+
+	        appointment.setPatient(patient);
+	        appointment.setDoctor(slot.getDoctor());
+	        appointment.setSlot(slot);
+	        appointment.setStatus("Booked");
+
+	        appointmentRepository.save(appointment);
+
+	        slot.setAvailable(false);
+	        slotRepository.save(slot);
+
+	        return ResponseEntity.ok("Appointment booked successfully");
+	    }
+
+		/*
+		 * @GetMapping("/patient/doctorsSlot/{doctorId}/availability") public
+		 * ResponseEntity<List<DoctorSlot>> getAvailability(
+		 * 
+		 * @PathVariable Long doctorId) {
+		 * 
+		 * 
+		 * return ResponseEntity.ok( patientService.getAvailableSlots(doctorId) ); }
+		 */
+	    @GetMapping("/patient/doctorsSlot/{doctorId}/availability")
+	    public ResponseEntity<?> getAvailability(@PathVariable Long doctorId) {
+
+	        List<DoctorSlot> slots = patientService.getAvailableSlots(doctorId);
+
+	        if (slots.isEmpty()) {
+	            return ResponseEntity.ok("No available slots found for this doctor.");
+	        }
+
+	        return ResponseEntity.ok(slots);
+	    }
+	    @GetMapping("/patient/appointments/{patientId}")
+	    public ResponseEntity<List<AppointmentEntity>> getMyAppointments(
+	            @PathVariable Integer patientId) {
+
+	        return ResponseEntity.ok(
+	                appointmentRepository.findByPatientId(patientId)
+	        );
+	    }
+	    @PutMapping("/patient/cancel/{appointmentId}")
+	    public ResponseEntity<String> cancelAppointment(
+	            @PathVariable Long appointmentId) {
+
+	        System.out.println("Step 1");
+
+	        AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
+	                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+	        System.out.println("Step 2");
+
+	        DoctorSlot slot = appointment.getSlot();
+
+	        System.out.println("Step 3");
+
+	        if (LocalDateTime.now().isAfter(slot.getStartTime())) {
+	            throw new RuntimeException(
+	                    "Appointment cannot be cancelled after scheduled time");
+	        }
+
+	        System.out.println("Step 4");
+
+	        appointment.setStatus("CANCELLED");
+	        appointmentRepository.save(appointment);
+
+	        System.out.println("Step 5");
+
+	        slot.setAvailable(true);
+	        slotRepository.save(slot);
+
+	        System.out.println("Step 6");
+
+	        return ResponseEntity.ok("Appointment cancelled successfully");
+	    }
 }

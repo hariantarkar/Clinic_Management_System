@@ -25,9 +25,9 @@ public class RegisterAuthenticated {
 
 	public String register(Register reg) {
 
-		if (regRepo.findByEmail(reg.getEmail()) != null) {
-			throw new RuntimeException("Email already registered");
-		}
+		if (regRepo.findByEmail(reg.getEmail()).isPresent()) {
+	        throw new RuntimeException("Email already registered");
+	    }
 		if (regRepo.findByContact(reg.getContact()) != null) {
 			throw new RuntimeException("Contact already registered or present");
 		}
@@ -47,7 +47,9 @@ public class RegisterAuthenticated {
 	private AuthenticationManager authenticationManager;
 
 	public String login(String email, String password) {
-		Register user = regRepo.findByEmail(email);
+		//Register user = regRepo.findByEmail(email);
+		Register user = regRepo.findByEmail(email)
+		        .orElseThrow(() -> new RuntimeException("User not found"));
 		System.out.println("Email = " + email);
 		if (user == null) {
 			throw new RuntimeException("You are not a registered user. Please register before login.");

@@ -1,4 +1,4 @@
-package com.CMS.RegisterController;
+	package com.CMS.RegisterController;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

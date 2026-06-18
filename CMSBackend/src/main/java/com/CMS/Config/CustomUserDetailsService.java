@@ -1,6 +1,5 @@
 package com.CMS.Config;
 
-import java.awt.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -20,23 +19,35 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Autowired
 	RegisterRepo regRepo;
 
+	
+	/*
+	 * @Override public UserDetails loadUserByUsername(String email) throws
+	 * UsernameNotFoundException { Register user = regRepo.findByEmail(email);
+	 * System.out.println("Role = " + user.getUserType()); if (user == null) { throw
+	 * new UsernameNotFoundException("User not found"); }
+	 * 
+	 * return new User( user.getEmail(), user.getPassword(), Arrays.asList( new
+	 * SimpleGrantedAuthority( "ROLE_" + user.getUserType().name().toUpperCase() ) )
+	 * ); }
+	 */
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		Register user = regRepo.findByEmail(email);
-		System.out.println("Role = " + user.getUserType());
-		if (user == null) {
-			throw new UsernameNotFoundException("User not found");
-		}
 
-		//return new User(user.getEmail(), user.getPassword(), new ArrayList<>());
-		return new User(
-		        user.getEmail(),
-		        user.getPassword(),
-		        Arrays.asList(
-		            new SimpleGrantedAuthority(
-		                "ROLE_" + user.getUserType().name().toUpperCase()
-		            )
-		        )
-		);
+	    Register user = regRepo.findByEmail(email)
+	            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+	    return new org.springframework.security.core.userdetails.User(
+	            user.getEmail(),
+	            user.getPassword(),
+	            Arrays.asList(
+	                    new SimpleGrantedAuthority(
+	                            "ROLE_" + user.getUserType().name().toUpperCase()
+	                    )
+	            )
+	    );
 	}
+	 
+	
 }
+
+//return new User(user.getEmail(), user.getPassword(), new ArrayList<>());

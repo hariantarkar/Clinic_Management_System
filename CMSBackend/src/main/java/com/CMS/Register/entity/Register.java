@@ -1,5 +1,7 @@
 package com.CMS.Register.entity;
 
+import java.time.LocalDateTime;
+
 import org.hibernate.usertype.UserType;
 
 import jakarta.persistence.Column;
@@ -82,4 +84,27 @@ public class Register {
 	public void setUserType(UserType userType) {
 		this.userType = userType;
 	}
+	
+	@Column(name = "otp")
+	private String otp;
+
+	@Column(name = "otp_expiry")
+	private LocalDateTime otpExpiry;
+
+	public String getOtp() {
+		return otp;
+	}
+
+	public void setOtp(String otp) {
+		this.otp = otp;
+	}
+
+	public LocalDateTime getOtpExpiry() {
+		return otpExpiry;
+	}
+
+	public void setOtpExpiry(LocalDateTime otpExpiry) {
+		this.otpExpiry = otpExpiry;
+	}
+	
 }
