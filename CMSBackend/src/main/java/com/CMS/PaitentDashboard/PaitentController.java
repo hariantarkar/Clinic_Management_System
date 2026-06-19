@@ -15,16 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.CMS.AdminDashboard.DoctorSlotRepository;
 import com.CMS.AdminSideEntity.Doctor;
 import com.CMS.AdminSideEntity.DoctorSlot;
+import com.CMS.DoctorDashboard.PrescriptionRepository;
 import com.CMS.Register.entity.Register;
 import com.CMS.RegisterRepository.RegisterRepo;
 
 @RestController
 public class PaitentController {
 
-	@GetMapping("/patient/profile")
-	public String PaitentProfile() {
-		return "welcome paitent profile";
-	}
 	
 	 @Autowired
 	    private PatientService patientService;
@@ -36,6 +33,9 @@ public class PaitentController {
 
 	    @Autowired
 	    private RegisterRepo registerRepository;
+	    
+	    @Autowired
+	    private PrescriptionRepository prescriptionRepository;
 
 	    @GetMapping("/patient/ViewAlldoctors")
 	    public ResponseEntity<List<Doctor>> getAllDoctors() {
@@ -85,16 +85,6 @@ public class PaitentController {
 
 	        return ResponseEntity.ok("Appointment booked successfully");
 	    }
-
-		/*
-		 * @GetMapping("/patient/doctorsSlot/{doctorId}/availability") public
-		 * ResponseEntity<List<DoctorSlot>> getAvailability(
-		 * 
-		 * @PathVariable Long doctorId) {
-		 * 
-		 * 
-		 * return ResponseEntity.ok( patientService.getAvailableSlots(doctorId) ); }
-		 */
 	    @GetMapping("/patient/doctorsSlot/{doctorId}/availability")
 	    public ResponseEntity<?> getAvailability(@PathVariable Long doctorId) {
 
@@ -106,13 +96,28 @@ public class PaitentController {
 
 	        return ResponseEntity.ok(slots);
 	    }
-	    @GetMapping("/patient/appointments/{patientId}")
-	    public ResponseEntity<List<AppointmentEntity>> getMyAppointments(
+
+		/*
+		 * @GetMapping("/patient/appointments/{patientId}") public
+		 * ResponseEntity<List<AppointmentEntity>> getMyAppointments(
+		 * 
+		 * @PathVariable Integer patientId) {
+		 * 
+		 * return ResponseEntity.ok( appointmentRepository.findByPatientId(patientId) );
+		 * }
+		 */
+	    @GetMapping("/patient/upcomingAppointments/{patientId}")
+	    public ResponseEntity<?> getUpcomingAppointments(
 	            @PathVariable Integer patientId) {
 
-	        return ResponseEntity.ok(
-	                appointmentRepository.findByPatientId(patientId)
-	        );
+	        List<AppointmentEntity> appointments =
+	                appointmentRepository.findByPatientIdAndStatus(patientId, "Booked");
+
+	        if (appointments.isEmpty()) {
+	            return ResponseEntity.ok("No upcoming appointments found");
+	        }
+
+	        return ResponseEntity.ok(appointments);
 	    }
 	    @PutMapping("/patient/cancel/{appointmentId}")
 	    public ResponseEntity<String> cancelAppointment(
@@ -148,4 +153,14 @@ public class PaitentController {
 
 	        return ResponseEntity.ok("Appointment cancelled successfully");
 	    }
+	    @GetMapping("/patient/patientSidePrescriptions/{patientId}")
+		public ResponseEntity<?> getPatientPrescriptions(@PathVariable Integer patientId) {
+
+		    Register patient = registerRepository.findById(patientId)
+		            .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+		    return ResponseEntity.ok(
+		            prescriptionRepository.findByPatientOrderByPrescriptionIdDesc(patient)
+		    );
+		}
 }

@@ -1,90 +1,33 @@
-package com.CMS.AdminDashboard;
+package com.CMS.DoctorDashboard;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.CMS.AdminDashboard.DoctorRepository;
+import com.CMS.AdminDashboard.DoctorService;
 import com.CMS.AdminSideEntity.Doctor;
 import com.CMS.PaitentDashboard.AppointmentRepository;
-import com.CMS.Register.entity.Register;
 import com.CMS.RegisterRepository.RegisterRepo;
 
 @RestController
-public class DoctorController {
-
-	 @Autowired
-	    private DoctorService doctorService;
-	 @Autowired
-	 private RegisterRepo registerRepository;
-	 
-	 @Autowired
-	 private DoctorRepository doctorRepository;
-	 
-	 @Autowired 
-	 private AppointmentRepository  AppointRepo;
-		
-	 @PostMapping("/admin/addNewDoctor")
-	 public ResponseEntity<?> addDoctor(@RequestBody Doctor doctor) {
-
-	     if (doctorRepository.findByEmail(doctor.getEmail()).isPresent()) {
-	         throw new RuntimeException("Doctor already exists in system");
-	     }
-
-	     return ResponseEntity.status(HttpStatus.CREATED)
-	             .body(doctorService.addDoctor(doctor));
-	 }
-	 @GetMapping("/admin/totalDoctors")
-	 public ResponseEntity<?> getTotalDoctors() {
-
-	     long totalDoctors = doctorRepository.count();
-
-	     Map<String, Object> response = new HashMap<>();
-	     response.put("totalDoctors", totalDoctors);
-
-	     return ResponseEntity.ok(response);
-	 }
-	 @GetMapping("/admin/getAllDoctors")
-	 public ResponseEntity<List<Doctor>> getAllDoctors() {
-	     return ResponseEntity.ok(doctorService.getAllDoctors());
-	 }
-	 @GetMapping("/admin/getDoctor/{doctorId}")
-	 public ResponseEntity<Doctor> getDoctorById(@PathVariable Long doctorId) {
-	     return ResponseEntity.ok(doctorService.getDoctorById(doctorId));
-	 }
-	 @PatchMapping("/admin/updateDoctor/{doctorId}")
-	 public ResponseEntity<Doctor> updateDoctor(
-	         @PathVariable Long doctorId,
-	         @RequestBody Doctor doctor) {
-
-	     return ResponseEntity.ok(
-	             doctorService.updateDoctor(doctorId, doctor));
-	 }
-	 @DeleteMapping("/admin/deleteDoctor/{doctorId}")
-	 public ResponseEntity<String> deleteDoctor(
-	         @PathVariable Long doctorId) {
-
-	     doctorService.deleteDoctor(doctorId);
-
-	     return ResponseEntity.ok("Doctor deleted successfully");
-	 }
-	 
-	 @GetMapping("/admin/completedCheckupsByDoctor")
+public class AppointmentController {
+	
+ 
+ @Autowired
+ private DoctorRepository doctorRepository;
+ 
+ @Autowired 
+ private AppointmentRepository  AppointRepo;
+	
+	 @GetMapping("/doctor/completedCheckupsByDoctor")
 	 public ResponseEntity<?> getCompletedCheckupsByDoctor(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
@@ -113,7 +56,7 @@ public class DoctorController {
 
 	     return ResponseEntity.ok(response);
 	 }
-	 @GetMapping("/admin/cancelledAppointmentsByDoctor")
+	 @GetMapping("/doctor/cancelledAppointmentsByDoctor")
 	 public ResponseEntity<?> getCancelledAppointmentsByDoctor(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
@@ -143,7 +86,7 @@ public class DoctorController {
 	     return ResponseEntity.ok(response);
 	 }
 	 
-	 @GetMapping("/admin/dayWiseTotalAppointments")
+	 @GetMapping("/doctor/dayWiseTotalAppointments")
 	 public ResponseEntity<?> getDayWiseTotalAppointments(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {

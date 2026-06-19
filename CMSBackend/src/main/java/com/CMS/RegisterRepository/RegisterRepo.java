@@ -18,6 +18,9 @@ public interface RegisterRepo extends JpaRepository<Register,Integer>{
   
 	 Register findByContact(String contact);
 	Optional<Register> findByEmail(String email);
+	
+	long countByUserType(Register.UserType userType);
+
 
 
 }

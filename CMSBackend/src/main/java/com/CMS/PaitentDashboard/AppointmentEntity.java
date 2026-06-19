@@ -1,9 +1,14 @@
 package com.CMS.PaitentDashboard;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.CMS.AdminSideEntity.Doctor;
 import com.CMS.AdminSideEntity.DoctorSlot;
 import com.CMS.Register.entity.Register;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -68,4 +73,8 @@ public class AppointmentEntity {
 	    private DoctorSlot slot;
 
 	    private String status;
+
+	    @Column(name = "appointment_date", updatable = false)
+	    @CreationTimestamp
+	    private LocalDateTime appointmentDate;
 }

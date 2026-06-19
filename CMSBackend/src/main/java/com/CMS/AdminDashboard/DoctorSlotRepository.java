@@ -22,6 +22,8 @@ public interface DoctorSlotRepository extends JpaRepository<DoctorSlot, Long> {
 		        LocalDateTime currentTime);
 	 List<DoctorSlot> findByDoctorDoctorIdOrderByStartTimeAsc(Long doctorId);
 	 
-	 
+	 List<DoctorSlot> findByDoctorDoctorIdAndStartTimeAfterOrderByStartTimeAsc(
+	            Long doctorId,
+	            LocalDateTime currentTime);
 	 
 }

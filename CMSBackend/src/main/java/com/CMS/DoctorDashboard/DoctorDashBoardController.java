@@ -2,7 +2,7 @@ package com.CMS.DoctorDashboard;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import com.CMS.PaitentDashboard.AppointmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +17,11 @@ import com.CMS.AdminDashboard.DoctorRepository;
 import com.CMS.AdminDashboard.DoctorSlotRepository;
 import com.CMS.AdminSideEntity.Doctor;
 import com.CMS.AdminSideEntity.DoctorSlot;
+import com.CMS.PaitentDashboard.AppointmentEntity;
+
 @RestController
 public class DoctorDashBoardController {
+
 
 	
 
@@ -27,6 +30,11 @@ public class DoctorDashBoardController {
 
 	 @Autowired
 	 private DoctorRepository doctorRepository;
+	 
+	 @Autowired
+	 private  AppointmentRepository AppointRepo;
+
+    
 
 	 @PostMapping("/doctor/addSlot/{doctorId}")
 	 public ResponseEntity<DoctorSlot> addSlot(
@@ -95,5 +103,17 @@ public class DoctorDashBoardController {
 	     }
 
 	     return ResponseEntity.ok(slots);
+	 }
+	 
+	 @GetMapping("/doctor/upcomingAppointments/{doctorId}")
+	 public ResponseEntity<List<AppointmentEntity>> getUpcomingAppointments(
+	         @PathVariable Long doctorId) {
+
+	     return ResponseEntity.ok(
+	    		 AppointRepo.findByDoctorDoctorIdAndStatus(
+	                     doctorId,
+	                     "BOOKED"
+	             )
+	     );
 	 }
 }

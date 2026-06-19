@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.CMS.AdminSideEntity.Doctor;
 import com.CMS.AdminSideEntity.DoctorSlot;
+import com.CMS.PaitentDashboard.AppointmentEntity;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
@@ -22,8 +23,6 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 	
 	Optional<Doctor> findByEmail(String email);
 
-
-    
  }
 
 //List<DoctorSlot> findByDoctorDoctorIdAndAvailableTrue(Long doctorId);
