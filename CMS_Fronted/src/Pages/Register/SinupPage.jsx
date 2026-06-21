@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { registerUser } from "../../services/RegisterService";
 import "./SignupPage.css";
 
 // --- Inline icon components (no external icon library needed) ---
@@ -76,16 +78,112 @@ const IconHeartPulse = () => (
 );
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [contact, setContact] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  // 🔧 Keys here are sent as JSON to /auth/reg — they must match the field
+  // names on your Java `Register` entity exactly (Jackson maps by name).
+  // Your entity uses "name" and "contact" — already matched below.
+  // If you rename entity fields later, update these keys to match.
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    contact: "",
+    password: "",
+  });
 
-  const handleSubmit = (e) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // clear the field-level error as the user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    // Mirrors backend @Pattern regexes exactly, so client-side errors match server-side ones
+    const nameRegex = /^[A-Za-z]+(\s+[A-Za-z]+)+$/;
+    const emailRegex = /^[A-Za-z0-9]+[A-Za-z0-9._%+-]*@[A-Za-z0-9-]+\.[A-Za-z]{2,3}$/;
+
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
+      newErrors.name = "Full name is required";
+    } else if (trimmedName.length < 3 || trimmedName.length > 50) {
+      newErrors.name = "Name must be between 3 and 50 characters";
+    } else if (!nameRegex.test(trimmedName)) {
+      newErrors.name = "Full name must contain at least first and last name and only letters";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!formData.contact.trim()) {
+      newErrors.contact = "Contact number is required";
+    } else if (!/^[0-9]{10}$/.test(formData.contact.trim())) {
+      newErrors.contact = "Contact number must be exactly 10 digits";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6 || formData.password.length > 20) {
+      newErrors.password = "Password must be between 6 and 20 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Wire this up to your registration logic
-    console.log("Create account:", { fullName, email, contact, password });
+    setApiError("");
+    setSuccessMsg("");
+
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await registerUser(formData);
+
+      // Backend returns ResponseEntity<String> -> response.data is plain text
+      setSuccessMsg(response.data || "Account created successfully!");
+      setFormData({ name: "", email: "", contact: "", password: "" });
+      setErrors({});
+
+      // Send the user to the login page after a short delay
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+    } catch (err) {
+      const data = err.response?.data;
+
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        // 400 from @Valid: { name: "...", email: "...", contact: "...", password: "..." }
+        setErrors((prev) => ({ ...prev, ...data }));
+        setApiError("Please fix the errors below and try again.");
+      } else if (typeof data === "string" && data) {
+        // Plain-text error from UsernameNotFoundException / BadCredentialsException / RuntimeException
+        // (e.g. "Email already registered" / "Contact already registered or present")
+        setApiError(data);
+        if (/email/i.test(data)) {
+          setErrors((prev) => ({ ...prev, email: data }));
+        } else if (/contact/i.test(data)) {
+          setErrors((prev) => ({ ...prev, contact: data }));
+        }
+      } else {
+        setApiError("Something went wrong while creating your account. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -139,8 +237,15 @@ export default function SignupPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="cms-form">
+            {successMsg && (
+              <div className="cms-alert cms-alert--success">{successMsg}</div>
+            )}
+            {apiError && (
+              <div className="cms-alert cms-alert--error">{apiError}</div>
+            )}
+
             <div className="cms-field">
-              <label className="cms-label" htmlFor="fullName">
+              <label className="cms-label" htmlFor="name">
                 Full Name
               </label>
               <div className="cms-input-wrap">
@@ -148,14 +253,16 @@ export default function SignupPage() {
                   <IconUser />
                 </span>
                 <input
-                  id="fullName"
+                  id="name"
+                  name="name"
                   type="text"
                   className="cms-input"
-                  placeholder="Enter your full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name (e.g. John Doe)"
+                  value={formData.name}
+                  onChange={handleChange}
                 />
               </div>
+              {errors.name && <span className="cms-error">{errors.name}</span>}
             </div>
 
             <div className="cms-field">
@@ -168,13 +275,15 @@ export default function SignupPage() {
                 </span>
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   className="cms-input"
                   placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </div>
+              {errors.email && <span className="cms-error">{errors.email}</span>}
             </div>
 
             <div className="cms-field">
@@ -187,13 +296,15 @@ export default function SignupPage() {
                 </span>
                 <input
                   id="contact"
+                  name="contact"
                   type="tel"
                   className="cms-input"
                   placeholder="Enter your contact number"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
+                  value={formData.contact}
+                  onChange={handleChange}
                 />
               </div>
+              {errors.contact && <span className="cms-error">{errors.contact}</span>}
             </div>
 
             <div className="cms-field">
@@ -206,11 +317,12 @@ export default function SignupPage() {
                 </span>
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   className="cms-input"
                   placeholder="Create password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                 />
                 <button
                   type="button"
@@ -221,12 +333,20 @@ export default function SignupPage() {
                   <IconEye off={showPassword} />
                 </button>
               </div>
-              <span className="cms-hint">Password must contain at least 6 characters.</span>
+              {errors.password ? (
+                <span className="cms-error">{errors.password}</span>
+              ) : (
+                <span className="cms-hint">Password must contain at least 6 characters.</span>
+              )}
             </div>
 
-            <button type="submit" className="cms-btn cms-btn--primary">
-              Create Account
-              <IconArrowRight />
+            <button
+              type="submit"
+              className="cms-btn cms-btn--primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating Account..." : "Create Account"}
+              {!isSubmitting && <IconArrowRight />}
             </button>
           </form>
 
@@ -234,7 +354,11 @@ export default function SignupPage() {
             <span>OR</span>
           </div>
 
-          <button type="button" className="cms-btn cms-btn--outline">
+          <button
+            type="button"
+            className="cms-btn cms-btn--outline"
+            onClick={() => navigate("/login")}
+          >
             <IconLoginArrow />
             Back to Login
           </button>

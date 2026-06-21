@@ -2,6 +2,7 @@ package com.CMS.RegisterAuthenticatedService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,7 +40,7 @@ public class RegisterAuthenticated {
 		reg.setPassword(passwordEncoder.encode(reg.getPassword()));
 		Register register = regRepo.save(reg);
 
-		return register != null ? "User information save successfully.." : "user record not save..";
+		return register != null ? "User Register successfull.." : "Something went wrong ..";
 
 	}
 
@@ -58,10 +59,21 @@ public class RegisterAuthenticated {
 		System.out.println("Login username = " + email);
 		System.out.println("Login password = " + password);
 
-		Authentication authentication = authenticationManager
-				.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+		/*
+		 * Authentication authentication = authenticationManager .authenticate(new
+		 * UsernamePasswordAuthenticationToken(email, password));
+		 */
+		
+		try {
 
-		System.out.println("Authentication = " + authentication.isAuthenticated());
+		    authenticationManager.authenticate(
+		            new UsernamePasswordAuthenticationToken(
+		                    email,
+		                    password));
+
+		} catch (BadCredentialsException e) {
+		    throw new RuntimeException("Invalid email or password");
+		}
 
 		//return jwtUtil.generateToken(email);
 		 return jwtUtil.generateToken(

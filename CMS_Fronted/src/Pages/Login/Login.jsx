@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/LoginService";
 import "./LoginPage.css";
 
 // --- Inline icon components (no external icon library needed) ---
@@ -65,14 +67,81 @@ const IconDoctor = () => (
 );
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    // Mirrors backend LoginRequest @Pattern/@Size constraints
+    const emailRegex = /^[A-Za-z0-9]+[A-Za-z0-9._%+-]*@[A-Za-z0-9-]+\.[A-Za-z]{2,3}$/;
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = "Enter a valid email address";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6 || formData.password.length > 20) {
+      newErrors.password = "Password length must be 6";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Wire this up to your auth logic
-    console.log("Login attempt:", { email, password });
+    setApiError("");
+    setSuccessMsg("");
+
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await loginUser(formData);
+      // Backend returns LoginResponse -> { message, token }
+      const { message, token } = response.data;
+
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+      setSuccessMsg(message || "Login successful!");
+
+      // Send the user to the dashboard once logged in
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 800);
+    } catch (err) {
+      const data = err.response?.data;
+
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        // 400 from @Valid on LoginRequest: { email: "...", password: "..." }
+        setErrors((prev) => ({ ...prev, ...data }));
+        setApiError("Please fix the errors below and try again.");
+      } else if (typeof data === "string" && data) {
+        // Plain-text error from RuntimeException, e.g. "User not found" / "Invalid email or password"
+        setApiError(data);
+      } else {
+        setApiError("Something went wrong while logging in. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -126,6 +195,13 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="cms-form">
+            {successMsg && (
+              <div className="cms-alert cms-alert--success">{successMsg}</div>
+            )}
+            {apiError && (
+              <div className="cms-alert cms-alert--error">{apiError}</div>
+            )}
+
             <div className="cms-field">
               <label className="cms-label" htmlFor="email">
                 Email Address
@@ -136,13 +212,15 @@ export default function LoginPage() {
                 </span>
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   className="cms-input"
                   placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </div>
+              {errors.email && <span className="cms-error">{errors.email}</span>}
             </div>
 
             <div className="cms-field">
@@ -160,11 +238,12 @@ export default function LoginPage() {
                 </span>
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   className="cms-input"
                   placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                 />
                 <button
                   type="button"
@@ -175,11 +254,16 @@ export default function LoginPage() {
                   <IconEye off={showPassword} />
                 </button>
               </div>
+              {errors.password && <span className="cms-error">{errors.password}</span>}
             </div>
 
-            <button type="submit" className="cms-btn cms-btn--primary">
-              Login to Dashboard
-              <IconArrowRight />
+            <button
+              type="submit"
+              className="cms-btn cms-btn--primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Logging in..." : "Login to Dashboard"}
+              {!isSubmitting && <IconArrowRight />}
             </button>
           </form>
 
@@ -187,7 +271,11 @@ export default function LoginPage() {
             <span>OR</span>
           </div>
 
-          <button type="button" className="cms-btn cms-btn--outline">
+          <button
+            type="button"
+            className="cms-btn cms-btn--outline"
+            onClick={() => navigate("/register")}
+          >
             <IconUserPlus />
             Create New Account
           </button>

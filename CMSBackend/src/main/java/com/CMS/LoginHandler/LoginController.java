@@ -33,4 +33,9 @@ public class LoginController {
 	public String profile() {
 	    return "Welcome User";
 	}
+	
+	@GetMapping("/auth/test")
+	public String test() {
+	    return "Backend Connected";
+	}
 }
