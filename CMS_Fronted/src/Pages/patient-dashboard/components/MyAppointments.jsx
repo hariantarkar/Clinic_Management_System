@@ -112,7 +112,7 @@ export default function MyAppointments({ patientId }) {
               return (
                 <div key={id} className="table-grid-row grid-cols-appointments">
                   <div>
-                    <p className="doctor-name">Dr. {getDoctorName(appt.doctor)}</p>
+                    <p className="doctor-name">{getDoctorName(appt.doctor)}</p>
                     <p className="doctor-meta">{appt.doctor?.specialization ?? '—'}</p>
                   </div>
                   <div>{formatDate(appt.appointmentDate)}</div>

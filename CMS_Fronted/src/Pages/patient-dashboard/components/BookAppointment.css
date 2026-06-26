@@ -1,0 +1,81 @@
+/* Scoped overrides for the doctor & slot tables in BookAppointment.jsx only.
+   Everything here is nested under .ba-page so it can't leak into other
+   components that reuse .table-grid / .grid-cols-doctors / .avatar-circle
+   elsewhere in the app (MyAppointments, MedicalRecords, etc). */
+
+.ba-page .table-grid-header {
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.ba-page .table-grid-header span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.ba-page .table-grid-row {
+  padding: 16px 16px;
+  border-top: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+}
+
+.ba-page .table-grid-row:hover {
+  background: #f8fafc;
+}
+
+.ba-page .doctor-cell {
+  gap: 14px;
+}
+
+.ba-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-primary);
+  background: var(--blue-light);
+}
+
+.ba-page .doctor-name {
+  font-size: 14.5px;
+}
+
+.ba-page .doctor-meta {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.ba-page .text-accent {
+  font-size: 13.5px;
+}
+
+.ba-page .text-fee {
+  font-size: 14px;
+}
+
+.ba-page .btn-primary {
+  padding: 8px 20px;
+  font-size: 13px;
+}
+
+/* Right-align Experience (3rd) and Fee (4th) columns — header + data,
+   so numeric values line up cleanly regardless of digit length */
+.ba-page .table-grid-header.grid-cols-doctors > span:nth-child(3),
+.ba-page .table-grid-row.grid-cols-doctors > div:nth-child(3) {
+  text-align: right;
+}
+
+.ba-page .table-grid-header.grid-cols-doctors > span:nth-child(4) {
+  text-align: right;
+}
+
+.ba-page .table-grid-row.grid-cols-doctors > div:nth-child(4) {
+  display: flex;
+  justify-content: flex-end;
+}
+#doctorNameINHead{
+    text-align: left;
+    margin-left: 80px;
+}

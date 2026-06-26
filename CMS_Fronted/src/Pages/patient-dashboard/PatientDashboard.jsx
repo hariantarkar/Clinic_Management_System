@@ -4,6 +4,7 @@ import BookAppointment from './components/BookAppointment';
 import MyAppointments from './components/MyAppointments';
 import MyPrescriptions from './components/MyPrescriptions';
 import MedicalRecords from './components/MedicalRecords';
+import { MenuIcon } from './components/icons';
 import './PatientDashboard.css';
 
 const VIEWS = {
@@ -27,6 +28,7 @@ export default function PatientDashboard() {
     localStorage.removeItem('token');
     localStorage.removeItem('patientId');
     localStorage.removeItem('patientName');
+      localStorage.removeItem('userType');
     window.location.href = '/login';
   };
 
@@ -42,6 +44,15 @@ export default function PatientDashboard() {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((open) => !open)}
       />
+       {!sidebarOpen && (
+        <button
+          className="sidebar-reopen-btn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          <MenuIcon />
+        </button>
+      )}
       <main className="main-content">
         <ActiveComponent patientId={patientId} />
       </main>

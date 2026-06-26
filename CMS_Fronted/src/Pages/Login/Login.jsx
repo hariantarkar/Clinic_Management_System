@@ -123,7 +123,7 @@ export default function LoginPage() {
     try {
       const response = await loginUser(formData);
       // Backend returns LoginResponse -> { message, token, userType }
-      const { message, token, userType,id } = response.data;
+      const { message, token, userType,id ,name} = response.data;
 
       if (token) {
         localStorage.setItem("token", token);
@@ -133,6 +133,9 @@ export default function LoginPage() {
       }
       if (id) {
   localStorage.setItem("patientId", id);
+}
+if (name) {
+  localStorage.setItem("patientName", name);
 }
       setSuccessMsg(message || "Login successful!");
 

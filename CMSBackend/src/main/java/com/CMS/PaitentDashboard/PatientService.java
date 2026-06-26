@@ -26,10 +26,17 @@ public class PatientService {
         return doctorRepository.searchDoctors(specialization, keyword);
     }
     
+	/*
+	 * public List<DoctorSlot> getAvailableSlots(Long doctorId) {
+	 * 
+	 * return doctorSlotRepository
+	 * .findByDoctorDoctorIdAndAvailableTrueAndStartTimeAfterOrderByStartTimeAsc(
+	 * doctorId, LocalDateTime.now()); }
+	 */
     public List<DoctorSlot> getAvailableSlots(Long doctorId) {
 
         return doctorSlotRepository
-                .findByDoctorDoctorIdAndAvailableTrueAndStartTimeAfterOrderByStartTimeAsc(
+                .findByDoctorDoctorIdAndAvailableTrueAndEndTimeAfterOrderByStartTimeAsc(
                         doctorId,
                         LocalDateTime.now());
     }

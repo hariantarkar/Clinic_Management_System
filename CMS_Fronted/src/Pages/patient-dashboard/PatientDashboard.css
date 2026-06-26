@@ -175,7 +175,32 @@
   width: 18px;
   height: 18px;
 }
+.sidebar-reopen-btn {
+  position: fixed;
+  top: 24px;
+  left: 20px;
+  z-index: 30;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--navy-dark);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
 
+.sidebar-reopen-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-reopen-btn:hover {
+  background: var(--navy-light);
+}
 /* ---------- Main content ---------- */
 .main-content {
   flex: 1;
@@ -302,6 +327,82 @@
 .search-input:focus {
   border-color: var(--blue-primary);
 }
+.rx-diagnosis {
+  margin-bottom: 16px;
+}
+
+.rx-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-light-gray);
+  margin-bottom: 4px;
+}
+
+.rx-diagnosis-text {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.rx-medicine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rx-medicine-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.rx-medicine-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.rx-medicine-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--blue-light);
+  color: var(--blue-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+}
+
+.rx-pill-light {
+  background: #f1f5f9;
+  color: var(--text-gray);
+}
+
+.rx-label-inline {
+  font-weight: 700;
+  opacity: 0.75;
+}
+.rx-diagnosis,
+.rx-diagnosis-text,
+.rx-label,
+.rx-medicine-card,
+.rx-medicine-name,
+.rx-medicine-meta {
+  text-align: left;
+}
 
 /* ---------- Table (CSS grid rows — guarantees header/data columns
    always line up, regardless of icons, avatars, or stacked text in a cell) ---------- */
@@ -354,7 +455,7 @@
 }
 
 .grid-cols-records {
-  grid-template-columns: 1.4fr 1fr 1.3fr 1.3fr 1.6fr;
+  grid-template-columns: 1.2fr 0.9fr 1.1fr 1fr 0.8fr 0.9fr 1.4fr;
 }
 
 .doctor-cell {
@@ -498,6 +599,52 @@
 
 .slot-btn:disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+}
+.slot-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: var(--blue-light);
+}
+
+.slot-card-full {
+  background: #f1f5f9;
+}
+
+.slot-time {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--blue-text);
+}
+
+.slot-card-full .slot-time {
+  color: var(--text-light-gray);
+}
+.slot-book-btn {
+  width: 100%;
+  background: var(--blue-primary);
+  color: #fff;
+  border: none;
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.slot-book-btn:hover:not(:disabled) {
+  background: var(--blue-primary-hover);
+}
+
+.slot-book-btn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
   cursor: not-allowed;
 }
 

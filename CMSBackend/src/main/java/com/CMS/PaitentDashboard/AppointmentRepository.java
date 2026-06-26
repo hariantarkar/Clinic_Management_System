@@ -87,4 +87,5 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
     boolean existsByPatient_IdAndSlot_SlotId(
             Integer patientId,
             Long slotId);
+    boolean existsByPatient_IdAndSlot_SlotIdAndStatus(Integer patientId, Long slotId, String status);
 }

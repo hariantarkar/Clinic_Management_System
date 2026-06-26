@@ -48,6 +48,11 @@ export async function getAllPrescriptions(patientId) {
   const { data } = await API.get(`/patient/patientSidePrescriptions/${patientId}`);
   return data;
 }
+/** GET /patient/medicinesByPatient/{patientId} */
+export async function getMedicinesByPatient(patientId) {
+  const { data } = await API.get(`/patient/medicinesByPatient/${patientId}`);
+  return data;
+}
 
 /** GET /patient/lastpatientPrescriptions/{patientId} */
 export async function getLastPrescription(patientId) {

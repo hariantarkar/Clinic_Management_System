@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getAllDoctors, getLastVisited, getAllPrescriptions } from '../api/patientApi';
+import { getAllDoctors, getLastVisited, getAllPrescriptions, getMedicinesByPatient } from '../api/patientApi';
 import EmptyState from './EmptyState';
 import { MedicalRecordIcon } from './icons';
 
@@ -25,18 +25,17 @@ export default function MedicalRecords({ patientId }) {
     setLoading(true);
     setError(null);
     try {
-      const [doctors, allPrescriptions] = await Promise.all([
+      const [doctors, allPrescriptions, allMedicines] = await Promise.all([
         getAllDoctors(),
         getAllPrescriptions(patientId).catch(() => []),
+        getMedicinesByPatient(patientId).catch(() => []),
       ]);
       const doctorList = Array.isArray(doctors) ? doctors : doctors?.doctors || [];
       const prescriptionList = Array.isArray(allPrescriptions)
         ? allPrescriptions
         : allPrescriptions?.prescriptions || [];
+      const medicineList = Array.isArray(allMedicines) ? allMedicines : allMedicines?.medicines || [];
 
-      // getLastVisited only returns the raw AppointmentEntity (no diagnosis/
-      // remarks fields on it at all). Those live on Prescription, matched by
-      // appointmentId — confirmed from the DB dump (appointment 22 <-> prescription 13, etc).
       const results = await Promise.all(
         doctorList.map(async (doctor) => {
           const doctorId = doctor.doctorId ?? doctor.id;
@@ -44,11 +43,19 @@ export default function MedicalRecords({ patientId }) {
             const visit = await getLastVisited(doctorId, patientId);
             if (!visit) return null;
 
+            // diagnosis/remarks live on Prescription, matched by appointmentId
             const matchingRx = prescriptionList.find(
               (rx) => rx.appointment?.appointmentId === visit.appointmentId
             );
 
-            return { doctor, visit, prescription: matchingRx };
+            // medicine name/dosage live on Medicine, matched by prescriptionId
+            const matchingMeds = matchingRx
+              ? medicineList.filter(
+                  (m) => m.prescription?.prescriptionId === matchingRx.prescriptionId
+                )
+              : [];
+
+            return { doctor, visit, prescription: matchingRx, medicines: matchingMeds };
           } catch {
             return null; // patient has no visit history with this doctor
           }
@@ -102,16 +109,22 @@ export default function MedicalRecords({ patientId }) {
               <span>Doctor</span>
               <span>Last Visit</span>
               <span>Diagnosis</span>
+              <span>Medicine</span>
+              <span>Dosage</span>
               <span>Status</span>
               <span>Remarks</span>
             </div>
-            {records.map(({ doctor, visit, prescription }) => {
+            {records.map(({ doctor, visit, prescription, medicines }) => {
               const doctorId = doctor.doctorId ?? doctor.id;
+              const medicineNames = medicines.map((m) => m.medicineName).filter(Boolean).join(', ');
+              const dosages = medicines.map((m) => m.dosage).filter(Boolean).join(', ');
               return (
                 <div key={doctorId} className="table-grid-row grid-cols-records">
-                  <div className="doctor-name">Dr. {getDoctorName(doctor)}</div>
+                  <div className="doctor-name">{getDoctorName(doctor)}</div>
                   <div>{formatDate(visit.appointmentDate)}</div>
                   <div>{prescription?.diagnosis ?? '—'}</div>
+                  <div>{medicineNames || '—'}</div>
+                  <div>{dosages || '—'}</div>
                   <div>
                     <span className={`status-badge status-${(visit.status ?? '').toLowerCase()}`}>
                       {visit.status ?? '—'}

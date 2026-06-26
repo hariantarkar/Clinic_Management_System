@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getAllPrescriptions, getLastPrescription } from '../api/patientApi';
+import { getAllPrescriptions, getLastPrescription, getMedicinesByPatient } from '../api/patientApi';
 import EmptyState from './EmptyState';
 import { PrescriptionIcon } from './icons';
 
-// Doctor.java's getter is getdName() (lowercase d), so Jackson serializes
-// the nested doctor's name as "dName" (capital N).
 function getDoctorName(doctor) {
   if (!doctor) return '—';
   return doctor.dName ?? doctor.dname ?? doctor.name ?? '—';
@@ -20,6 +18,7 @@ function formatDate(dateTimeStr) {
 export default function MyPrescriptions({ patientId }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [lastPrescription, setLastPrescription] = useState(null);
+  const [lastMedicines, setLastMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,12 +27,24 @@ export default function MyPrescriptions({ patientId }) {
     setLoading(true);
     setError(null);
     try {
-      const [all, last] = await Promise.all([
+      const [all, last, allMedicines] = await Promise.all([
         getAllPrescriptions(patientId),
-        getLastPrescription(patientId).catch(() => null), // no prescriptions yet is not a hard error
+        getLastPrescription(patientId).catch(() => []),
+        getMedicinesByPatient(patientId).catch(() => []),
       ]);
-      setPrescriptions(Array.isArray(all) ? all : all?.prescriptions || []);
-      setLastPrescription(last);
+
+      const allList = Array.isArray(all) ? all : all?.prescriptions || [];
+      setPrescriptions(allList);
+
+      // getLastPrescription returns a List<Prescription> ordered desc — "last" is just its first item
+      const lastList = Array.isArray(last) ? last : last?.prescriptions || [];
+      const lastRx = lastList[0] ?? null;
+      setLastPrescription(lastRx);
+
+      const medicineList = Array.isArray(allMedicines) ? allMedicines : allMedicines?.medicines || [];
+      setLastMedicines(
+        lastRx ? medicineList.filter((m) => m.prescription?.prescriptionId === lastRx.prescriptionId) : []
+      );
     } catch (err) {
       setError(err.message || 'Could not load your prescriptions.');
     } finally {
@@ -45,13 +56,7 @@ export default function MyPrescriptions({ patientId }) {
     loadPrescriptions();
   }, [loadPrescriptions]);
 
-  // Prescription entity has `consultationCompleted` (Boolean) — that's the
-  // real "active vs done" signal, there is no `status` field.
   const activeCount = prescriptions.filter((p) => !p.consultationCompleted).length;
-
-  // getLastPrescription returns a Medicine row, with the full Prescription
-  // nested under `.prescription` (doctor/appointment/diagnosis/remarks live there).
-  const lastRx = lastPrescription?.prescription;
 
   return (
     <>
@@ -60,33 +65,55 @@ export default function MyPrescriptions({ patientId }) {
           <h2 className="page-title">My Prescriptions</h2>
           <p className="page-subtitle">View and manage your prescribed medications and treatment records.</p>
         </div>
-        <span className="top-pill">{activeCount} Active Prescriptions</span>
+        <span className="top-pill">{prescriptions.length} Prescriptions</span>
       </header>
 
-      {lastPrescription && (
-        <section className="card highlight-card">
-          <div className="card-header">
-            <div className="icon-circle"><PrescriptionIcon /></div>
-            <div>
-              <h3 className="card-title">Most Recent Prescription</h3>
-              <p className="card-subtitle">
-                From Dr. {getDoctorName(lastRx?.doctor)} on{' '}
-                {formatDate(lastRx?.createdAt ?? lastRx?.appointment?.appointmentDate)}
-              </p>
+     {lastPrescription && (
+  <section className="card highlight-card">
+    <div className="card-header">
+      <div className="icon-circle"><PrescriptionIcon /></div>
+      <div>
+        <h3 className="card-title">Most Recent Prescription</h3>
+        <p className="card-subtitle">
+          From {getDoctorName(lastPrescription.doctor)} on{' '}
+          {formatDate(lastPrescription.createdAt ?? lastPrescription.appointment?.appointmentDate)}
+        </p>
+      </div>
+    </div>
+
+    {lastPrescription.diagnosis && (
+      <div className="rx-diagnosis">
+        <span className="rx-label">Diagnosis</span>
+        <p className="rx-diagnosis-text">{lastPrescription.diagnosis}</p>
+      </div>
+    )}
+
+    {lastMedicines.length > 0 ? (
+      <div className="rx-medicine-list">
+        {lastMedicines.map((m) => (
+          <div key={m.medicineId} className="rx-medicine-card">
+             <span className="rx-label">Medicine</span>
+            <div className="rx-medicine-name">{m.medicineName}</div>
+            <div className="rx-medicine-meta">
+              {m.dosage && (
+                <span className="rx-pill">
+                  <span className="rx-label-inline">Dosage</span> {m.dosage}
+                </span>
+              )}
+              {m.instructions && (
+                <span className="rx-pill rx-pill-light">
+                  <span className="rx-label-inline">Take</span> {m.instructions}
+                </span>
+              )}
             </div>
           </div>
-          <p className="record-notes">
-            <strong>{lastPrescription.medicineName ?? '—'}</strong>
-            {lastPrescription.dosage ? ` — ${lastPrescription.dosage}` : ''}
-            {lastPrescription.instructions ? ` · ${lastPrescription.instructions}` : ''}
-          </p>
-          {lastRx?.diagnosis && (
-            <p className="record-notes" style={{ marginTop: 6, color: 'var(--text-gray)' }}>
-              Diagnosis: {lastRx.diagnosis}
-            </p>
-          )}
-        </section>
-      )}
+        ))}
+      </div>
+    ) : (
+      <p className="record-notes">No medicine details recorded for this prescription.</p>
+    )}
+  </section>
+)}
 
       <section className="card">
         <div className="card-header">
@@ -121,7 +148,7 @@ export default function MyPrescriptions({ patientId }) {
               const completed = !!p.consultationCompleted;
               return (
                 <div key={id} className="table-grid-row grid-cols-prescriptions">
-                  <div className="doctor-name">Dr. {getDoctorName(p.doctor)}</div>
+                  <div className="doctor-name">{getDoctorName(p.doctor)}</div>
                   <div>{formatDate(p.createdAt ?? p.appointment?.appointmentDate)}</div>
                   <div>{p.diagnosis ?? '—'}</div>
                   <div>{p.remarks ?? '—'}</div>

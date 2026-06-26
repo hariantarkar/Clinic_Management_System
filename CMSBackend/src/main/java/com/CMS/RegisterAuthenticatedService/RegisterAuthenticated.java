@@ -102,6 +102,8 @@ public class RegisterAuthenticated {
 				"Login Successful",
 				token,
 				user.getUserType().name(),
-				(long) user.getId());
+				(long) user.getId(),
+				user.getName());
+		
 	}
 }

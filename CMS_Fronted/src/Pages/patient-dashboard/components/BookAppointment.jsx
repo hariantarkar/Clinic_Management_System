@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getAllDoctors, searchDoctors, getDoctorAvailability, bookSlot } from '../api/patientApi';
 import EmptyState from './EmptyState';
 import { CalendarIcon, RupeeIcon, BriefcaseIcon } from './icons';
+import './BookAppointment.css';
 
-// doctor_slot only stores startTime/endTime as full datetimes (no separate
-// "slotTime" field), so format them into something readable for the buttons.
 function formatTime(dateTimeStr) {
   if (!dateTimeStr) return '—';
   const date = new Date(dateTimeStr);
@@ -12,10 +11,20 @@ function formatTime(dateTimeStr) {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-// Doctor.java's getter is getdName() (lowercase d), so Jackson serializes
-// the field as "dName" (capital N) — not "dname" and not "name".
 function getDoctorName(doctor) {
   return doctor.dName ?? doctor.dname ?? doctor.name ?? '—';
+}
+
+// Turns "Dr Harsh Antarkar" into "HA" for the avatar circle.
+// Strips a leading "Dr"/"Dr." so the initials reflect the actual name,
+// not the title.
+function getInitials(name) {
+  if (!name || name === '—') return '?';
+  const cleaned = name.replace(/^dr\.?\s*/i, '').trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  const initials = parts.length === 1 ? parts[0].slice(0, 2) : parts[0][0] + parts[parts.length - 1][0];
+  return initials.toUpperCase();
 }
 
 export default function BookAppointment({ patientId }) {
@@ -31,6 +40,14 @@ export default function BookAppointment({ patientId }) {
 
   const [bookingSlotId, setBookingSlotId] = useState(null);
   const [bookingMessage, setBookingMessage] = useState(null);
+  const messageTimeoutRef = useRef(null);
+
+  // Clear any pending auto-dismiss timer if the component unmounts
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
+  }, []);
 
   const loadDoctors = useCallback(async () => {
     setLoadingDoctors(true);
@@ -49,7 +66,6 @@ export default function BookAppointment({ patientId }) {
     loadDoctors();
   }, [loadDoctors]);
 
-  // Debounced search against /patient/doctors/search
   useEffect(() => {
     if (!searchTerm.trim()) {
       loadDoctors();
@@ -71,11 +87,12 @@ export default function BookAppointment({ patientId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
+  // Loads/refreshes the slot list for a doctor. Does NOT touch bookingMessage —
+  // that's managed separately so a post-booking refresh doesn't wipe it out.
   const handleViewSlots = async (doctor) => {
     setSelectedDoctor(doctor);
     setSlots([]);
     setSlotsError(null);
-    setBookingMessage(null);
     setLoadingSlots(true);
     try {
       const doctorId = doctor.doctorId ?? doctor.id;
@@ -88,25 +105,33 @@ export default function BookAppointment({ patientId }) {
     }
   };
 
+  // Explicit doctor selection clears any previous booking message right away.
+  const handleSelectDoctor = (doctor) => {
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    setBookingMessage(null);
+    handleViewSlots(doctor);
+  };
+
   const handleBookSlot = async (slot) => {
     const slotId = slot.slotId ?? slot.id;
     setBookingSlotId(slotId);
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
     setBookingMessage(null);
     try {
-      // /patient/book/{slotId}/{patientId} returns a plain success string
-      // (e.g. "Appointment booked successfully at 2026-06-25T09:00"), not JSON.
       const message = await bookSlot(slotId, patientId);
       setBookingMessage({ type: 'success', text: message || 'Appointment booked successfully.' });
-      handleViewSlots(selectedDoctor); // refresh so the booked slot disappears
+      await handleViewSlots(selectedDoctor); // refresh so the booked slot updates
     } catch (err) {
       setBookingMessage({ type: 'error', text: err.message || 'Booking failed. Please try another slot.' });
     } finally {
       setBookingSlotId(null);
     }
+    // Keep the message visible for a few seconds, then auto-dismiss
+    messageTimeoutRef.current = setTimeout(() => setBookingMessage(null), 4000);
   };
 
   return (
-    <>
+    <div className="ba-page">
       <header className="page-header">
         <div>
           <h2 className="page-title">Book Appointment</h2>
@@ -143,7 +168,7 @@ export default function BookAppointment({ patientId }) {
         ) : (
           <div className="table-grid">
             <div className="table-grid-header grid-cols-doctors">
-              <span>Doctor</span>
+              <span id="doctorNameINHead">Doctor</span>
               <span>Specialization</span>
               <span>Experience</span>
               <span>Fee</span>
@@ -152,23 +177,23 @@ export default function BookAppointment({ patientId }) {
             {doctors.map((doctor) => {
               const doctorId = doctor.doctorId ?? doctor.id;
               const isSelected = selectedDoctor && (selectedDoctor.doctorId ?? selectedDoctor.id) === doctorId;
+              const name = getDoctorName(doctor);
               return (
                 <div
                   key={doctorId}
                   className={`table-grid-row grid-cols-doctors ${isSelected ? 'row-selected' : ''}`}
                 >
                   <div className="doctor-cell">
-                    <span className="avatar-circle" />
+                    <span className="avatar-circle ba-avatar">{getInitials(name)}</span>
                     <div>
-                      <p className="doctor-name"> {getDoctorName(doctor)}</p>
+                      <p className="doctor-name">{name}</p>
                       <p className="doctor-meta">{doctor.qualification ?? '—'}</p>
                     </div>
                   </div>
                   <div className="text-accent">{doctor.specialization ?? '—'}</div>
                   <div><BriefcaseIcon className="inline-icon" />{doctor.experienceYears ?? '—'} Years</div>
-                  <div className="text-fee"><RupeeIcon className="inline-icon" />₹{doctor.consultationFee ?? '—'}</div>
-                  <div>
-                    <button className="btn-primary" onClick={() => handleViewSlots(doctor)}>
+<div className="text-fee"><RupeeIcon className="inline-icon" />{doctor.consultationFee ?? '—'}</div>                  <div>
+                    <button className="btn-primary" onClick={() => handleSelectDoctor(doctor)}>
                       View Slots
                     </button>
                   </div>
@@ -183,10 +208,10 @@ export default function BookAppointment({ patientId }) {
         <div className="card-header card-header-split">
           <div className="card-header" style={{ border: 'none', padding: 0, margin: 0 }}>
             <div>
-              <h3 className="card-title">Available Slots</h3>
+              <h3 className="card-title">Today's Available Slots</h3>
               {selectedDoctor && (
                 <p className="card-subtitle">
-                  Dr. {getDoctorName(selectedDoctor)} • {selectedDoctor.specialization}
+                  {getDoctorName(selectedDoctor)} • {selectedDoctor.specialization}
                 </p>
               )}
             </div>
@@ -224,19 +249,23 @@ export default function BookAppointment({ patientId }) {
               const isUnavailable = slot.available === false || isFull;
               const isBooking = bookingSlotId === slotId;
               return (
-                <button
-                  key={slotId}
-                  className="slot-btn"
-                  disabled={isBooking || isUnavailable}
-                  onClick={() => handleBookSlot(slot)}
-                >
-                  {isBooking ? 'Booking...' : isUnavailable ? 'Full' : `${formatTime(slot.startTime)} – ${formatTime(slot.endTime)}`}
-                </button>
+                <div key={slotId} className={`slot-card ${isUnavailable ? 'slot-card-full' : ''}`}>
+                  <span className="slot-time">
+                    {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+                  </span>
+                  <button
+                    className="slot-book-btn"
+                    disabled={isBooking || isUnavailable}
+                    onClick={() => handleBookSlot(slot)}
+                  >
+                    {isBooking ? 'Booking...' : isUnavailable ? 'Full' : 'Book Appointment'}
+                  </button>
+                </div>
               );
             })}
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }

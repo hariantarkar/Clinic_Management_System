@@ -15,9 +15,14 @@ public interface DoctorSlotRepository extends JpaRepository<DoctorSlot, Long> {
 	            Long doctorId,
 	            LocalDateTime startTime,
 	            LocalDateTime endTime);
-	 //List<DoctorSlot> findByDoctorDoctorIdAndAvailableTrueOrderByStartTimeAsc(Long doctorId);
 
-	 List<DoctorSlot> findByDoctorDoctorIdAndAvailableTrueAndStartTimeAfterOrderByStartTimeAsc(
+		
+		  List<DoctorSlot>
+		  findByDoctorDoctorIdAndAvailableTrueAndStartTimeAfterOrderByStartTimeAsc(
+		  Long doctorId, LocalDateTime currentTime);
+		 
+	 
+	 List<DoctorSlot> findByDoctorDoctorIdAndAvailableTrueAndEndTimeAfterOrderByStartTimeAsc(
 		        Long doctorId,
 		        LocalDateTime currentTime);
 	 List<DoctorSlot> findByDoctorDoctorIdOrderByStartTimeAsc(Long doctorId);

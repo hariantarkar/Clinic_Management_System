@@ -23,170 +23,200 @@ import com.CMS.RegisterRepository.RegisterRepo;
 @RestController
 public class PaitentController {
 
+	@Autowired
+	private PatientService patientService;
+	@Autowired
+	private DoctorSlotRepository slotRepository;
+
+	@Autowired
+	private AppointmentRepository appointmentRepository;
+
+	@Autowired
+	private RegisterRepo registerRepository;
+
+	@Autowired
+	private PrescriptionRepository prescriptionRepository;
+
+	@GetMapping("/patient/ViewAlldoctors")
+	public ResponseEntity<List<Doctor>> getAllDoctors() {
+		return ResponseEntity.ok(patientService.getAllDoctors());
+	}
+
+	@GetMapping("/patient/doctors/search")
+	public ResponseEntity<List<Doctor>> searchDoctors(@RequestParam(required = false) String specialization,
+			@RequestParam(required = false) String keyword) {
+
+		return ResponseEntity.ok(patientService.searchDoctors(specialization, keyword));
+	}
+
+	/*
+	 * @PostMapping("/patient/book/{slotId}/{patientId}") public ResponseEntity<?>
+	 * bookAppointment(
+	 * 
+	 * @PathVariable Long slotId,
+	 * 
+	 * @PathVariable Integer patientId) {
+	 * 
+	 * DoctorSlot slot = slotRepository.findById(slotId) .orElseThrow(() -> new
+	 * RuntimeException("Slot not found"));
+	 * 
+	 * Register patient = registerRepository.findById(patientId) .orElseThrow(() ->
+	 * new RuntimeException("Patient not found"));
+	 * 
+	 * if (patient.getUserType() != Register.UserType.patient) { throw new
+	 * RuntimeException("Invalid patient account"); }
+	 * 
+	 * boolean alreadyBooked = appointmentRepository
+	 * .existsByPatient_IdAndSlot_SlotId( patientId, slotId);
+	 * 
+	 * boolean alreadyBooked = appointmentRepository
+	 * .existsByPatient_IdAndSlot_SlotIdAndStatus( patientId, slotId, "Booked");
+	 * 
+	 * if (alreadyBooked) { throw new RuntimeException(
+	 * "You have already booked this slot"); }
+	 * 
+	 * if (slot.getBookedAppointments() >= slot.getMaxAppointments()) {
+	 * 
+	 * throw new RuntimeException( "No appointment slots available"); }
+	 * 
+	 * LocalDateTime appointmentTime = slot.getStartTime().plusMinutes( (long)
+	 * slot.getBookedAppointments() slot.getAppointmentDuration());
+	 * 
+	 * AppointmentEntity appointment = new AppointmentEntity();
+	 * 
+	 * appointment.setDoctor(slot.getDoctor()); appointment.setPatient(patient);
+	 * appointment.setSlot(slot); appointment.setStatus("Booked");
+	 * appointment.setAppointmentDate(appointmentTime);
+	 * 
+	 * appointmentRepository.save(appointment);
+	 * 
+	 * slot.setBookedAppointments( slot.getBookedAppointments() + 1);
+	 * 
+	 * slotRepository.save(slot);
+	 * 
+	 * return ResponseEntity.ok( "Appointment booked successfully at " +
+	 * appointmentTime); }
+	 */
 	
-	 @Autowired
-	    private PatientService patientService;
-	    @Autowired
-	    private DoctorSlotRepository slotRepository;
+	@PostMapping("/patient/book/{slotId}/{patientId}")
+	public ResponseEntity<?> bookAppointment(
+	        @PathVariable Long slotId,
+	        @PathVariable Integer patientId) {
 
-	    @Autowired
-	    private AppointmentRepository appointmentRepository;
+	    DoctorSlot slot = slotRepository.findById(slotId)
+	            .orElseThrow(() -> new RuntimeException("Slot not found"));
 
-	    @Autowired
-	    private RegisterRepo registerRepository;
-	    
-	    @Autowired
-	    private PrescriptionRepository prescriptionRepository;
+	    Register patient = registerRepository.findById(patientId)
+	            .orElseThrow(() -> new RuntimeException("Patient not found"));
 
-	    @GetMapping("/patient/ViewAlldoctors")
-	    public ResponseEntity<List<Doctor>> getAllDoctors() {
-	        return ResponseEntity.ok(patientService.getAllDoctors());
-	    }
-	    @GetMapping("/patient/doctors/search")
-	    public ResponseEntity<List<Doctor>> searchDoctors(
-	            @RequestParam(required = false) String specialization,
-	            @RequestParam(required = false) String keyword) {
-
-	        return ResponseEntity.ok(
-	                patientService.searchDoctors(specialization, keyword)
-	        );
-	    }
-	
-
-	    @PostMapping("/patient/book/{slotId}/{patientId}")
-	    public ResponseEntity<?> bookAppointment(
-	            @PathVariable Long slotId,
-	            @PathVariable Integer patientId) {
-
-	        DoctorSlot slot = slotRepository.findById(slotId)
-	                .orElseThrow(() ->
-	                        new RuntimeException("Slot not found"));
-
-	        Register patient = registerRepository.findById(patientId)
-	                .orElseThrow(() ->
-	                        new RuntimeException("Patient not found"));
-
-	        if (patient.getUserType() != Register.UserType.patient) {
-	            throw new RuntimeException("Invalid patient account");
-	        }
-	        boolean alreadyBooked =
-	                appointmentRepository
-	                .existsByPatient_IdAndSlot_SlotId(
-	                        patientId,
-	                        slotId);
-
-	        if (alreadyBooked) {
-	            throw new RuntimeException(
-	                    "You have already booked this slot");
-	        }
-
-	        if (slot.getBookedAppointments()
-	                >= slot.getMaxAppointments()) {
-
-	            throw new RuntimeException(
-	                    "No appointment slots available");
-	        }
-
-	        LocalDateTime appointmentTime =
-	                slot.getStartTime().plusMinutes(
-	                        (long) slot.getBookedAppointments()
-	                                * slot.getAppointmentDuration());
-
-	        AppointmentEntity appointment =
-	                new AppointmentEntity();
-
-	        appointment.setDoctor(slot.getDoctor());
-	        appointment.setPatient(patient);
-	        appointment.setSlot(slot);
-	        appointment.setStatus("Booked");
-	        appointment.setAppointmentDate(appointmentTime);
-
-	        appointmentRepository.save(appointment);
-
-	        slot.setBookedAppointments(
-	                slot.getBookedAppointments() + 1);
-
-	        slotRepository.save(slot);
-
-	        return ResponseEntity.ok(
-	                "Appointment booked successfully at "
-	                        + appointmentTime);
-	    }
-	    @GetMapping("/patient/doctorsSlot/{doctorId}/availability")
-	    public ResponseEntity<?> getAvailability(@PathVariable Long doctorId) {
-
-	        List<DoctorSlot> slots = patientService.getAvailableSlots(doctorId);
-
-	        if (slots.isEmpty()) {
-	            return ResponseEntity.ok("No available slots found for this doctor.");
-	        }
-
-	        return ResponseEntity.ok(slots);
+	    if (patient.getUserType() != Register.UserType.patient) {
+	        throw new RuntimeException("Invalid patient account");
 	    }
 
-		
-	    @GetMapping("/patient/upcomingAppointments/{patientId}")
-	    public ResponseEntity<?> getUpcomingAppointments(
-	            @PathVariable Integer patientId) {
+	    boolean alreadyBooked =
+	            appointmentRepository
+	            .existsByPatient_IdAndSlot_SlotIdAndStatus(
+	                    patientId,
+	                    slotId,
+	                    "Booked");                 // <-- only blocks active bookings now
 
-	        List<AppointmentEntity> appointments =
-	                appointmentRepository.findByPatientIdAndStatus(patientId, "Booked");
-
-	        if (appointments.isEmpty()) {
-	            return ResponseEntity.ok("No upcoming appointments found");
-	        }
-
-	        return ResponseEntity.ok(appointments);
+	    if (alreadyBooked) {
+	        throw new RuntimeException("You have already booked this slot");
 	    }
-	    @PutMapping("/patient/cancel/{appointmentId}")
-	    public ResponseEntity<String> cancelAppointment(
-	            @PathVariable Long appointmentId) {
 
-	        System.out.println("Step 1");
-
-	        AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
-	                .orElseThrow(() -> new RuntimeException("Appointment not found"));
-
-	        System.out.println("Step 2");
-
-	        DoctorSlot slot = appointment.getSlot();
-
-	        System.out.println("Step 3");
-
-	        if (LocalDateTime.now().isAfter(slot.getStartTime())) {
-	            throw new RuntimeException(
-	                    "Appointment cannot be cancelled after scheduled time");
-	        }
-
-	        System.out.println("Step 4");
-
-	        appointment.setStatus("CANCELLED");
-	        appointmentRepository.save(appointment);
-
-	        System.out.println("Step 5");
-
-	        slot.setAvailable(true);
-	        slotRepository.save(slot);
-
-	        System.out.println("Step 6");
-
-	        return ResponseEntity.ok("Appointment cancelled successfully");
+	    if (slot.getBookedAppointments() >= slot.getMaxAppointments()) {
+	        throw new RuntimeException("No appointment slots available");
 	    }
-	    @GetMapping("/patient/patientSidePrescriptions/{patientId}")
-		public ResponseEntity<?> getPatientPrescriptions(@PathVariable Integer patientId) {
 
-		    Register patient = registerRepository.findById(patientId)
-		            .orElseThrow(() -> new RuntimeException("Patient not found"));
+	    LocalDateTime appointmentTime =
+	            slot.getStartTime().plusMinutes(
+	                    (long) slot.getBookedAppointments()
+	                            * slot.getAppointmentDuration());
 
-		    return ResponseEntity.ok(
-		            prescriptionRepository.findByPatientOrderByPrescriptionIdDesc(patient)
-		    );
+	    AppointmentEntity appointment = new AppointmentEntity();
+	    appointment.setDoctor(slot.getDoctor());
+	    appointment.setPatient(patient);
+	    appointment.setSlot(slot);
+	    appointment.setStatus("Booked");
+	    appointment.setAppointmentDate(appointmentTime);
+
+	    appointmentRepository.save(appointment);
+
+	    slot.setBookedAppointments(slot.getBookedAppointments() + 1);
+	    slotRepository.save(slot);
+
+	    return ResponseEntity.ok("Appointment booked successfully at " + appointmentTime);
+	}
+	@GetMapping("/patient/doctorsSlot/{doctorId}/availability")
+	public ResponseEntity<?> getAvailability(@PathVariable Long doctorId) {
+
+		List<DoctorSlot> slots = patientService.getAvailableSlots(doctorId);
+
+		if (slots.isEmpty()) {
+			return ResponseEntity.ok("No available slots found for this doctor.");
 		}
 
-@ExceptionHandler(RuntimeException.class)
-public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-    return ResponseEntity.badRequest().body(ex.getMessage());
-}
+		return ResponseEntity.ok(slots);
+	}
+
+	@GetMapping("/patient/upcomingAppointments/{patientId}")
+	public ResponseEntity<?> getUpcomingAppointments(@PathVariable Integer patientId) {
+
+		List<AppointmentEntity> appointments = appointmentRepository.findByPatientIdAndStatus(patientId, "Booked");
+
+		if (appointments.isEmpty()) {
+			return ResponseEntity.ok("No upcoming appointments found");
+		}
+
+		return ResponseEntity.ok(appointments);
+	}
+
+	@PutMapping("/patient/cancel/{appointmentId}")
+	public ResponseEntity<String> cancelAppointment(@PathVariable Long appointmentId) {
+
+		System.out.println("Step 1");
+
+		AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
+				.orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+		System.out.println("Step 2");
+
+		DoctorSlot slot = appointment.getSlot();
+
+		System.out.println("Step 3");
+
+		if (LocalDateTime.now().isAfter(slot.getStartTime())) {
+			throw new RuntimeException("Appointment cannot be cancelled after scheduled time");
+		}
+
+		System.out.println("Step 4");
+
+		appointment.setStatus("CANCELLED");
+		appointmentRepository.save(appointment);
+
+		System.out.println("Step 5");
+
+		slot.setAvailable(true);
+		slotRepository.save(slot);
+
+		System.out.println("Step 6");
+
+		return ResponseEntity.ok("Appointment cancelled successfully");
+	}
+
+	@GetMapping("/patient/patientSidePrescriptions/{patientId}")
+	public ResponseEntity<?> getPatientPrescriptions(@PathVariable Integer patientId) {
+
+		Register patient = registerRepository.findById(patientId)
+				.orElseThrow(() -> new RuntimeException("Patient not found"));
+
+		return ResponseEntity.ok(prescriptionRepository.findByPatientOrderByPrescriptionIdDesc(patient));
+	}
+
+	@ExceptionHandler(RuntimeException.class)
+	public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
+		return ResponseEntity.badRequest().body(ex.getMessage());
+	}
 }
 
 /*
@@ -229,5 +259,3 @@ public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
  * 
  * return ResponseEntity.ok("Appointment booked successfully"); }
  */
-
-
