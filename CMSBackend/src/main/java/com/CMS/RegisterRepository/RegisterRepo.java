@@ -15,7 +15,7 @@ public interface RegisterRepo extends JpaRepository<Register,Integer>{
 	Register findByName(@Param("name") String name);
 
 	//Register findByEmail(String email);
-  
+	boolean existsByEmail(String email);
 	 Register findByContact(String contact);
 	Optional<Register> findByEmail(String email);
 	

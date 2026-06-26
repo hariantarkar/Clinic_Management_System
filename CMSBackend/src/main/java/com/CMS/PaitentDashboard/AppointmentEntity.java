@@ -74,7 +74,14 @@ public class AppointmentEntity {
 
 	    private String status;
 
-	    @Column(name = "appointment_date", updatable = false)
-	    @CreationTimestamp
+	    @Column(name = "appointment_date")
 	    private LocalDateTime appointmentDate;
+
+		public LocalDateTime getAppointmentDate() {
+			return appointmentDate;
+		}
+
+		public void setAppointmentDate(LocalDateTime appointmentDate) {
+			this.appointmentDate = appointmentDate;
+		}
 }

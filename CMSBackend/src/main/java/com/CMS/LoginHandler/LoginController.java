@@ -9,33 +9,40 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.CMS.RegisterAuthenticatedService.RegisterAuthenticated;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class LoginController {
 
 	@Autowired
 	private RegisterAuthenticated authService;
 	
+
 	@PostMapping("/auth/login")
 	public ResponseEntity<LoginResponse> login(
-	        @RequestBody LoginRequest request) {
-
-	    String token = authService.login(
+	        @Valid @RequestBody LoginRequest request) {
+	 
+	    LoginResponse response = authService.login(
 	            request.getEmail(),
 	            request.getPassword());
-
-	    LoginResponse response = new LoginResponse("Login Successfull", token);
-
-	    response.setMessage("Login Successfully");
-	    response.setToken(token);
+	    		
+	 
 	    return ResponseEntity.ok(response);
 	}
-	@GetMapping("/user/profile")
-	public String profile() {
-	    return "Welcome User";
-	}
 	
-	@GetMapping("/auth/test")
-	public String test() {
-	    return "Backend Connected";
-	}
+	
+
 }
+
+/*
+ * @PostMapping("/auth/login") public ResponseEntity<LoginResponse> login(
+ * 
+ * @Valid @RequestBody LoginRequest request) {
+ * 
+ * String token = authService.login( request.getEmail(), request.getPassword());
+ * 
+ * LoginResponse response = new LoginResponse("Login Successfull", token);
+ * 
+ * response.setMessage("Login Successful"); response.setToken(token); return
+ * ResponseEntity.ok(response); }
+ */

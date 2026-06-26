@@ -24,3 +24,7 @@ spring:
       auth: true
       starttls:
        enable: true
+   logging:
+     level:
+      org.hibernate.SQL: DEBUG
+      org.hibernate.orm.jdbc.bind : TRACE			 		 		 		 

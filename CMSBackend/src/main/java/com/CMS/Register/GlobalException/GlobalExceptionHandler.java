@@ -25,19 +25,22 @@ public class GlobalExceptionHandler {
 
 		return new ResponseEntity<>("Invalid Password", HttpStatus.UNAUTHORIZED);
 	}
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<Map<String, String>> handleValidationExceptions(
-	        MethodArgumentNotValidException ex) {
 
-	    Map<String, String> errors = new HashMap<>();
+	
+	  @ExceptionHandler(MethodArgumentNotValidException.class)
+	    public ResponseEntity<Map<String, String>> handleValidation(
+	            MethodArgumentNotValidException ex) {
 
-	    ex.getBindingResult().getFieldErrors()
-	            .forEach(error ->
-	                    errors.put(error.getField(),
-	                               error.getDefaultMessage()));
+	        Map<String, String> errors = new HashMap<>();
 
-	    return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-	}
+	        ex.getBindingResult().getFieldErrors()
+	                .forEach(error ->
+	                        errors.put(error.getField(),
+	                                error.getDefaultMessage()));
+
+	        return ResponseEntity.badRequest().body(errors);
+	    }	
+	
 	@ExceptionHandler(RuntimeException.class)
 	public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
 

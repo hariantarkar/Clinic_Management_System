@@ -91,7 +91,7 @@ public class Register {
 		admin, patient, doctor
 	}
 	@NotBlank(message = "Password is required")
-	@Size(min = 6, max = 20,
+	@Size(min = 6,
 	      message = "Password must be between 6 and 20 characters")
 	@Column(name = "password")
 	private String password;

@@ -9,9 +9,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.CMS.Config.JwtUtil;
+import com.CMS.LoginHandler.LoginResponse;
 import com.CMS.Register.entity.Register;
 import com.CMS.Register.entity.Register.UserType;
 import com.CMS.RegisterRepository.RegisterRepo;
+
+import jakarta.persistence.Id;
 
 @Service("authService")
 public class RegisterAuthenticated {
@@ -47,23 +50,35 @@ public class RegisterAuthenticated {
 	@Autowired
 	private AuthenticationManager authenticationManager;
 
-	public String login(String email, String password) {
-		//Register user = regRepo.findByEmail(email);
+	/*
+	 * public String login(String email, String password) { //Register user =
+	 * regRepo.findByEmail(email); Register user = regRepo.findByEmail(email)
+	 * .orElseThrow(() -> new RuntimeException("User not found"));
+	 * System.out.println("Email = " + email); if (user == null) { throw new
+	 * RuntimeException("You are not a registered user. Please register before login."
+	 * ); } System.out.println(regRepo.findByEmail(email));
+	 * System.out.println("Login username = " + email);
+	 * System.out.println("Login password = " + password);
+	 * 
+	 * 
+	 * 
+	 * try {
+	 * 
+	 * authenticationManager.authenticate( new UsernamePasswordAuthenticationToken(
+	 * email, password));
+	 * 
+	 * } catch (BadCredentialsException e) { throw new
+	 * RuntimeException("Invalid email or password"); }
+	 * 
+	 * //return jwtUtil.generateToken(email); return jwtUtil.generateToken(
+	 * user.getEmail(), user.getUserType().name() ); }
+	 */
+	
+	public LoginResponse login(String email, String password) {
+
 		Register user = regRepo.findByEmail(email)
 		        .orElseThrow(() -> new RuntimeException("User not found"));
-		System.out.println("Email = " + email);
-		if (user == null) {
-			throw new RuntimeException("You are not a registered user. Please register before login.");
-		}
-		System.out.println(regRepo.findByEmail(email));
-		System.out.println("Login username = " + email);
-		System.out.println("Login password = " + password);
 
-		/*
-		 * Authentication authentication = authenticationManager .authenticate(new
-		 * UsernamePasswordAuthenticationToken(email, password));
-		 */
-		
 		try {
 
 		    authenticationManager.authenticate(
@@ -75,10 +90,18 @@ public class RegisterAuthenticated {
 		    throw new RuntimeException("Invalid email or password");
 		}
 
-		//return jwtUtil.generateToken(email);
-		 return jwtUtil.generateToken(
-	                user.getEmail(),
-	                user.getUserType().name()
-	        );
+		String token = jwtUtil.generateToken(
+		            user.getEmail(),
+		            user.getUserType().name()
+		            
+		    );
+
+		// 🔧 Build the full response here, while `user` is still in scope —
+		// this is the only place we actually know the role.
+		return new LoginResponse(
+				"Login Successful",
+				token,
+				user.getUserType().name(),
+				(long) user.getId());
 	}
 }

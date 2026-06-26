@@ -45,7 +45,7 @@ public class PasswordController {
 
         user.setOtp(otp);
         user.setOtpExpiry(
-                LocalDateTime.now().plusMinutes(1));
+                LocalDateTime.now().plusMinutes(5));
 
         RegRepo.save(user);
 
@@ -60,9 +60,6 @@ public class PasswordController {
 	@PostMapping("/auth/reset-password")
 	public ResponseEntity<String> resetPassword(
 	        @RequestBody ResetPasswordRequest request) {
-
-	    //Register user = RegRepo.findByEmail(request.getEmail());
-
 	   
 	    Register user = RegRepo.findByEmail(request.getEmail())
 	            .orElseThrow(() -> new RuntimeException("User not found"));

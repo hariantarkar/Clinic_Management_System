@@ -26,19 +26,6 @@ public class PatientService {
         return doctorRepository.searchDoctors(specialization, keyword);
     }
     
-
-
-	/*
-	 * public List<DoctorSlot> getAvailableSlots(Long doctorId) { return
-	 * doctorSlotRepository.findByDoctorDoctorIdAndAvailableTrue(doctorId); }
-	 */    
-	/*
-	 * public List<DoctorSlot> getAvailableSlots(Long doctorId) {
-	 * 
-	 * return doctorSlotRepository
-	 * .findByDoctorDoctorIdAndAvailableTrueOrderByStartTimeAsc(doctorId); }
-	 */
-    
     public List<DoctorSlot> getAvailableSlots(Long doctorId) {
 
         return doctorSlotRepository
@@ -46,6 +33,16 @@ public class PatientService {
                         doctorId,
                         LocalDateTime.now());
     }
-
 	
 }
+
+/*
+ * public List<DoctorSlot> getAvailableSlots(Long doctorId) { return
+ * doctorSlotRepository.findByDoctorDoctorIdAndAvailableTrue(doctorId); }
+ */    
+/*
+ * public List<DoctorSlot> getAvailableSlots(Long doctorId) {
+ * 
+ * return doctorSlotRepository
+ * .findByDoctorDoctorIdAndAvailableTrueOrderByStartTimeAsc(doctorId); }
+ */

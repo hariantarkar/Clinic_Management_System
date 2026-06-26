@@ -66,6 +66,14 @@ const IconDoctor = () => (
   </svg>
 );
 
+// 🔧 Where each role lands after login — keys must be lowercase to match
+// your `user_type` enum values exactly ('admin', 'doctor', 'patient').
+const ROLE_ROUTES = {
+  admin: "/admin",
+  doctor: "/doctor",
+  patient: "/patient",
+};
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -114,17 +122,26 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const response = await loginUser(formData);
-      // Backend returns LoginResponse -> { message, token }
-      const { message, token } = response.data;
+      // Backend returns LoginResponse -> { message, token, userType }
+      const { message, token, userType,id } = response.data;
 
       if (token) {
         localStorage.setItem("token", token);
       }
+      if (userType) {
+        localStorage.setItem("userType", userType);
+      }
+      if (id) {
+  localStorage.setItem("patientId", id);
+}
       setSuccessMsg(message || "Login successful!");
 
-      // Send the user to the dashboard once logged in
+      // Route to the right dashboard based on the role from the backend
+      const normalizedRole = (userType || "").toLowerCase();
+      const destination = ROLE_ROUTES[normalizedRole] || "/dashboard";
+
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate(destination);
       }, 800);
     } catch (err) {
       const data = err.response?.data;
@@ -228,7 +245,14 @@ export default function LoginPage() {
                 <label className="cms-label" htmlFor="password">
                   Password
                 </label>
-                <a href="#" className="cms-link">
+                <a
+                  href="#"
+                  className="cms-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/forgot-password");
+                  }}
+                >
                   Forgot Password?
                 </a>
               </div>

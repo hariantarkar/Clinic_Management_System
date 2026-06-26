@@ -1,8 +1,12 @@
 package com.CMS.DoctorDashboard;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.CMS.PaitentDashboard.AppointmentRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,18 +39,60 @@ public class DoctorDashBoardController {
 	 private  AppointmentRepository AppointRepo;
 
     
-
+		/*
+		 * @PostMapping("/doctor/addSlot/{doctorId}") public ResponseEntity<DoctorSlot>
+		 * addSlot(
+		 * 
+		 * @PathVariable Long doctorId,
+		 * 
+		 * @RequestBody DoctorSlot slot) {
+		 * System.out.println("Inside Doctor Add Slot API"); Doctor doctor =
+		 * doctorRepository.findById(doctorId) .orElseThrow(() -> new
+		 * RuntimeException("Doctor not found"));
+		 * 
+		 * if (!doctor.getActive()) { throw new RuntimeException("Doctor  is inactive");
+		 * } boolean exists = slotRepository
+		 * .existsByDoctorDoctorIdAndStartTimeAndEndTime( doctorId, slot.getStartTime(),
+		 * slot.getEndTime());
+		 * 
+		 * if (exists) { throw new RuntimeException("your Slot already exists !"); }
+		 * slot.setDoctor(doctor); slot.setAvailable(true);
+		 * 
+		 * return ResponseEntity.status(HttpStatus.CREATED)
+		 * .body(slotRepository.save(slot)); }
+		 */
+	 
 	 @PostMapping("/doctor/addSlot/{doctorId}")
 	 public ResponseEntity<DoctorSlot> addSlot(
 	         @PathVariable Long doctorId,
-	         @RequestBody DoctorSlot slot) {
-		 System.out.println("Inside Doctor Add Slot API");
+	         @Valid @RequestBody DoctorSlot slot) {
+
+	     System.out.println("Inside Doctor Add Slot API");
+
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
 	     if (!doctor.getActive()) {
-	    	    throw new RuntimeException("Doctor  is inactive");
-	    	}
+	         throw new RuntimeException("Doctor is inactive");
+	     }
+
+	     if (slot.getStartTime() == null || slot.getEndTime() == null) {
+	         throw new RuntimeException("Start time and End time are required");
+	     }
+
+	     if (slot.getStartTime().isBefore(LocalDateTime.now())) {
+	         throw new RuntimeException("Start time cannot be in the past");
+	     }
+
+	     if (!slot.getEndTime().isAfter(slot.getStartTime())) {
+	         throw new RuntimeException("End time must be after start time");
+	     }
+
+	     if (slot.getAppointmentDuration() == null
+	             || slot.getAppointmentDuration() <= 0) {
+	         throw new RuntimeException("Appointment duration must be greater than 0");
+	     }
+
 	     boolean exists = slotRepository
 	             .existsByDoctorDoctorIdAndStartTimeAndEndTime(
 	                     doctorId,
@@ -54,13 +100,29 @@ public class DoctorDashBoardController {
 	                     slot.getEndTime());
 
 	     if (exists) {
-	         throw new RuntimeException("your Slot already exists !");
+	         throw new RuntimeException("Slot already exists");
 	     }
+
+	     long totalMinutes = Duration
+	             .between(slot.getStartTime(), slot.getEndTime())
+	             .toMinutes();
+
+	     if (totalMinutes < slot.getAppointmentDuration()) {
+	         throw new RuntimeException(
+	                 "Appointment duration cannot exceed slot duration");
+	     }
+
+	     int maxAppointments =
+	             (int) (totalMinutes / slot.getAppointmentDuration());
+
 	     slot.setDoctor(doctor);
-	     slot.setAvailable(true);
+	     slot.setBookedAppointments(0);
+	     slot.setMaxAppointments(maxAppointments);
+
+	     DoctorSlot savedSlot = slotRepository.save(slot);
 
 	     return ResponseEntity.status(HttpStatus.CREATED)
-	             .body(slotRepository.save(slot));
+	             .body(savedSlot);
 	 }
 	 @PatchMapping("/doctor/updateSlot/{slotId}")
 	 public ResponseEntity<?> updateSlot(

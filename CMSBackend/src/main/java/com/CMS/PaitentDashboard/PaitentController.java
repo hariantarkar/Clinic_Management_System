@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,32 +59,58 @@ public class PaitentController {
 	            @PathVariable Integer patientId) {
 
 	        DoctorSlot slot = slotRepository.findById(slotId)
-	                .orElseThrow(() -> new RuntimeException("Slot not found"));
-
-	        if (!slot.isAvailable()) {
-	            throw new RuntimeException("Slot already booked");
-	        }
+	                .orElseThrow(() ->
+	                        new RuntimeException("Slot not found"));
 
 	        Register patient = registerRepository.findById(patientId)
-	                .orElseThrow(() -> new RuntimeException("Patient not found"));
+	                .orElseThrow(() ->
+	                        new RuntimeException("Patient not found"));
 
 	        if (patient.getUserType() != Register.UserType.patient) {
 	            throw new RuntimeException("Invalid patient account");
 	        }
+	        boolean alreadyBooked =
+	                appointmentRepository
+	                .existsByPatient_IdAndSlot_SlotId(
+	                        patientId,
+	                        slotId);
 
-	        AppointmentEntity appointment = new AppointmentEntity();
+	        if (alreadyBooked) {
+	            throw new RuntimeException(
+	                    "You have already booked this slot");
+	        }
 
-	        appointment.setPatient(patient);
+	        if (slot.getBookedAppointments()
+	                >= slot.getMaxAppointments()) {
+
+	            throw new RuntimeException(
+	                    "No appointment slots available");
+	        }
+
+	        LocalDateTime appointmentTime =
+	                slot.getStartTime().plusMinutes(
+	                        (long) slot.getBookedAppointments()
+	                                * slot.getAppointmentDuration());
+
+	        AppointmentEntity appointment =
+	                new AppointmentEntity();
+
 	        appointment.setDoctor(slot.getDoctor());
+	        appointment.setPatient(patient);
 	        appointment.setSlot(slot);
 	        appointment.setStatus("Booked");
+	        appointment.setAppointmentDate(appointmentTime);
 
 	        appointmentRepository.save(appointment);
 
-	        slot.setAvailable(false);
+	        slot.setBookedAppointments(
+	                slot.getBookedAppointments() + 1);
+
 	        slotRepository.save(slot);
 
-	        return ResponseEntity.ok("Appointment booked successfully");
+	        return ResponseEntity.ok(
+	                "Appointment booked successfully at "
+	                        + appointmentTime);
 	    }
 	    @GetMapping("/patient/doctorsSlot/{doctorId}/availability")
 	    public ResponseEntity<?> getAvailability(@PathVariable Long doctorId) {
@@ -97,15 +124,7 @@ public class PaitentController {
 	        return ResponseEntity.ok(slots);
 	    }
 
-		/*
-		 * @GetMapping("/patient/appointments/{patientId}") public
-		 * ResponseEntity<List<AppointmentEntity>> getMyAppointments(
-		 * 
-		 * @PathVariable Integer patientId) {
-		 * 
-		 * return ResponseEntity.ok( appointmentRepository.findByPatientId(patientId) );
-		 * }
-		 */
+		
 	    @GetMapping("/patient/upcomingAppointments/{patientId}")
 	    public ResponseEntity<?> getUpcomingAppointments(
 	            @PathVariable Integer patientId) {
@@ -163,4 +182,52 @@ public class PaitentController {
 		            prescriptionRepository.findByPatientOrderByPrescriptionIdDesc(patient)
 		    );
 		}
+
+@ExceptionHandler(RuntimeException.class)
+public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
+    return ResponseEntity.badRequest().body(ex.getMessage());
 }
+}
+
+/*
+ * @GetMapping("/patient/appointments/{patientId}") public
+ * ResponseEntity<List<AppointmentEntity>> getMyAppointments(
+ * 
+ * @PathVariable Integer patientId) {
+ * 
+ * return ResponseEntity.ok( appointmentRepository.findByPatientId(patientId) );
+ * }
+ */
+/*
+ * @PostMapping("/patient/book/{slotId}/{patientId}") public ResponseEntity<?>
+ * bookAppointment(
+ * 
+ * @PathVariable Long slotId,
+ * 
+ * @PathVariable Integer patientId) {
+ * 
+ * DoctorSlot slot = slotRepository.findById(slotId) .orElseThrow(() -> new
+ * RuntimeException("Slot not found"));
+ * 
+ * if (!slot.isAvailable()) { throw new RuntimeException("Slot already booked");
+ * }
+ * 
+ * Register patient = registerRepository.findById(patientId) .orElseThrow(() ->
+ * new RuntimeException("Patient not found"));
+ * 
+ * if (patient.getUserType() != Register.UserType.patient) { throw new
+ * RuntimeException("Invalid patient account"); }
+ * 
+ * AppointmentEntity appointment = new AppointmentEntity();
+ * 
+ * appointment.setPatient(patient); appointment.setDoctor(slot.getDoctor());
+ * appointment.setSlot(slot); appointment.setStatus("Booked");
+ * 
+ * appointmentRepository.save(appointment);
+ * 
+ * slot.setAvailable(false); slotRepository.save(slot);
+ * 
+ * return ResponseEntity.ok("Appointment booked successfully"); }
+ */
+
+
