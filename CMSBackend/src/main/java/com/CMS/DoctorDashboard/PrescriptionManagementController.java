@@ -32,74 +32,28 @@ public class PrescriptionManagementController {
 	@Autowired
 	private AppointmentRepository appointmentRepository;
 
-	
-	
- 
-	 
-	/*
-	 * @PostMapping(
-	 * "/doctor/addPrescription/{doctorId}/{patientId}/{appointmentId}") public
-	 * ResponseEntity<?> addPrescription(
-	 * 
-	 * @PathVariable Long doctorId,
-	 * 
-	 * @PathVariable Integer patientId,
-	 * 
-	 * @PathVariable Long appointmentId,
-	 * 
-	 * @RequestBody Prescription prescription) {
-	 * 
-	 * Doctor doctor = doctorRepository.findById(doctorId) .orElseThrow(() -> new
-	 * RuntimeException("Doctor not found"));
-	 * 
-	 * Register patient = registerRepository.findById(patientId) .orElseThrow(() ->
-	 * new RuntimeException("Patient not found"));
-	 * 
-	 * AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
-	 * .orElseThrow(() -> new RuntimeException("Appointment not found")); if
-	 * ("COMPLETED".equals(appointment.getStatus())) { throw new
-	 * RuntimeException("Appointment already completed. Book new appointment."); }
-	 * 
-	 * // ✅ set relationships prescription.setDoctor(doctor);
-	 * prescription.setPatient(patient); prescription.setAppointment(appointment);
-	 * 
-	 * // ❌ do NOT complete here (correct design)
-	 * prescription.setConsultationCompleted(false);
-	 * 
-	 * Prescription saved = prescriptionRepository.save(prescription);
-	 * 
-	 * return ResponseEntity.ok(saved); }
-	 */
-	
 	@PostMapping("/doctor/addPrescription/{doctorId}/{patientId}/{appointmentId}")
 	public ResponseEntity<?> addPrescription(
 	        @PathVariable Long doctorId,
 	        @PathVariable Integer patientId,
 	        @PathVariable Long appointmentId,
 	        @RequestBody Prescription prescription) {
-
 	    Doctor doctor = doctorRepository.findById(doctorId)
 	            .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	    Register patient = registerRepository.findById(patientId)
 	            .orElseThrow(() -> new RuntimeException("Patient not found"));
-
 	    AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
 	            .orElseThrow(() -> new RuntimeException("Appointment not found"));
-
 	    if ("COMPLETED".equalsIgnoreCase(appointment.getStatus())) {
 	        throw new RuntimeException("Appointment already completed");
 	    }
-
 	    if (prescriptionRepository.findByAppointmentAppointmentId(appointmentId).isPresent()) {
 	        throw new RuntimeException("Prescription already exists");
 	    }
-
 	    prescription.setDoctor(doctor);
 	    prescription.setPatient(patient);
 	    prescription.setAppointment(appointment);
 	    prescription.setConsultationCompleted(false);
-
 	    return ResponseEntity.ok(prescriptionRepository.save(prescription));
 	}
 	@PostMapping("/doctor/addMedicine/{prescriptionId}")
@@ -109,67 +63,97 @@ public class PrescriptionManagementController {
 
 	    Prescription prescription = prescriptionRepository.findById(prescriptionId)
 	            .orElseThrow(() -> new RuntimeException("Prescription not found"));
-
 	    // ✅ Link medicine with prescription
 	    medicine.setPrescription(prescription);
-
 	    // ❌ DO NOT mark completed here (wrong design)
 	    // prescription.setConsultationCompleted(true);
-
 	    Medicine savedMedicine = medicineRepository.save(medicine);
-
 	    return ResponseEntity.ok(savedMedicine);
 	}
 	@PostMapping("/doctor/completeConsultation/{prescriptionId}")
 	public ResponseEntity<?> completeConsultation(@PathVariable Long prescriptionId) {
-
 	    Prescription prescription = prescriptionRepository.findById(prescriptionId)
 	            .orElseThrow(() -> new RuntimeException("Prescription not found"));
-
 	    if (Boolean.TRUE.equals(prescription.getConsultationCompleted())) {
 	        return ResponseEntity.badRequest().body("Consultation already completed");
 	    }
-
 	    AppointmentEntity appointment = prescription.getAppointment();
-
 	    if (appointment == null) {
 	        throw new RuntimeException("Appointment not linked with prescription");
 	    }
-
 	    prescription.setConsultationCompleted(true);
-
 	    appointment.setStatus("COMPLETED");
 	    appointmentRepository.save(appointment);
-
 	    return ResponseEntity.ok(prescriptionRepository.save(prescription));
 	}
 	
-	/*
-	 * @PostMapping("/doctor/completeConsultation/{prescriptionId}") public
-	 * ResponseEntity<?> completeConsultation(@PathVariable Long
-	 * prescriptionId,@PathVariable Long appointmentId) {
-	 * 
-	 * Prescription prescription = prescriptionRepository.findById(prescriptionId)
-	 * .orElseThrow(() -> new RuntimeException("Prescription not found"));
-	 * 
-	 * if (Boolean.TRUE.equals(prescription.getConsultationCompleted())) { return
-	 * ResponseEntity.badRequest() .body("Consultation already completed"); } //
-	 * prevent duplicate prescription for same appointment if
-	 * (prescriptionRepository.findByAppointmentAppointmentId(appointmentId).
-	 * isPresent()) { throw new
-	 * RuntimeException("Prescription already exists for this appointment"); }
-	 * 
-	 * prescription.setConsultationCompleted(true);
-	 * 
-	 * AppointmentEntity appointment = prescription.getAppointment();
-	 * 
-	 * if (appointment == null) { throw new
-	 * RuntimeException("Appointment not linked with prescription"); }
-	 * 
-	 * appointment.setStatus("COMPLETED"); appointmentRepository.save(appointment);
-	 * 
-	 * Prescription updated = prescriptionRepository.save(prescription);
-	 * 
-	 * return ResponseEntity.ok(updated); }
-	 */
 }
+
+
+
+/*
+ * @PostMapping("/doctor/completeConsultation/{prescriptionId}") public
+ * ResponseEntity<?> completeConsultation(@PathVariable Long
+ * prescriptionId,@PathVariable Long appointmentId) {
+ * 
+ * Prescription prescription = prescriptionRepository.findById(prescriptionId)
+ * .orElseThrow(() -> new RuntimeException("Prescription not found"));
+ * 
+ * if (Boolean.TRUE.equals(prescription.getConsultationCompleted())) { return
+ * ResponseEntity.badRequest() .body("Consultation already completed"); } //
+ * prevent duplicate prescription for same appointment if
+ * (prescriptionRepository.findByAppointmentAppointmentId(appointmentId).
+ * isPresent()) { throw new
+ * RuntimeException("Prescription already exists for this appointment"); }
+ * 
+ * prescription.setConsultationCompleted(true);
+ * 
+ * AppointmentEntity appointment = prescription.getAppointment();
+ * 
+ * if (appointment == null) { throw new
+ * RuntimeException("Appointment not linked with prescription"); }
+ * 
+ * appointment.setStatus("COMPLETED"); appointmentRepository.save(appointment);
+ * 
+ * Prescription updated = prescriptionRepository.save(prescription);
+ * 
+ * return ResponseEntity.ok(updated); }
+ */
+
+
+
+/*
+ * @PostMapping(
+ * "/doctor/addPrescription/{doctorId}/{patientId}/{appointmentId}") public
+ * ResponseEntity<?> addPrescription(
+ * 
+ * @PathVariable Long doctorId,
+ * 
+ * @PathVariable Integer patientId,
+ * 
+ * @PathVariable Long appointmentId,
+ * 
+ * @RequestBody Prescription prescription) {
+ * 
+ * Doctor doctor = doctorRepository.findById(doctorId) .orElseThrow(() -> new
+ * RuntimeException("Doctor not found"));
+ * 
+ * Register patient = registerRepository.findById(patientId) .orElseThrow(() ->
+ * new RuntimeException("Patient not found"));
+ * 
+ * AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
+ * .orElseThrow(() -> new RuntimeException("Appointment not found")); if
+ * ("COMPLETED".equals(appointment.getStatus())) { throw new
+ * RuntimeException("Appointment already completed. Book new appointment."); }
+ * 
+ * // ✅ set relationships prescription.setDoctor(doctor);
+ * prescription.setPatient(patient); prescription.setAppointment(appointment);
+ * 
+ * // ❌ do NOT complete here (correct design)
+ * prescription.setConsultationCompleted(false);
+ * 
+ * Prescription saved = prescriptionRepository.save(prescription);
+ * 
+ * return ResponseEntity.ok(saved); }
+ */
+

@@ -1,0 +1,70 @@
+.ms-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.ms-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.ms-form-field label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.ms-form-field input {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.ms-form-field input:focus {
+  outline: none;
+  border-color: var(--blue-primary);
+}
+
+.ms-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ms-slot-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.ms-slot-time {
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.ms-slot-meta {
+  font-size: 13px;
+  color: var(--text-gray);
+  flex: 1;
+}
+
+.ms-arrow {
+  color: var(--text-light-gray);
+}
+
+.ms-row-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}

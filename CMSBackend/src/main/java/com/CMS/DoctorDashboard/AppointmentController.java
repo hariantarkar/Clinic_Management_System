@@ -31,15 +31,11 @@ public class AppointmentController {
 	 public ResponseEntity<?> getCompletedCheckupsByDoctor(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
-
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	     LocalDate localDate = LocalDate.parse(date);
-
 	     LocalDateTime start = localDate.atStartOfDay();
 	     LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	     long totalCompleted =
 	             AppointRepo.countByDoctorDoctorIdAndStatusAndAppointmentDateBetween(
 	                     doctorId,
@@ -53,22 +49,17 @@ public class AppointmentController {
 	     response.put("doctorEmail", doctor.getEmail());
 	     response.put("date", date);
 	     response.put("totalCompletedCheckups", totalCompleted);
-
 	     return ResponseEntity.ok(response);
 	 }
 	 @GetMapping("/doctor/cancelledAppointmentsByDoctor")
 	 public ResponseEntity<?> getCancelledAppointmentsByDoctor(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
-
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	     LocalDate localDate = LocalDate.parse(date);
-
 	     LocalDateTime start = localDate.atStartOfDay();
 	     LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	     long totalCancelled =
 	             AppointRepo.countByDoctorDoctorIdAndStatusAndAppointmentDateBetween(
 	                     doctorId,
@@ -82,23 +73,17 @@ public class AppointmentController {
 	     response.put("doctorEmail", doctor.getEmail());
 	     response.put("date", date);
 	     response.put("totalCancelledAppointments", totalCancelled);
-
 	     return ResponseEntity.ok(response);
 	 }
-	 
 	 @GetMapping("/doctor/dayWiseTotalAppointments")
 	 public ResponseEntity<?> getDayWiseTotalAppointments(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
-
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	     LocalDate localDate = LocalDate.parse(date);
-
 	     LocalDateTime start = localDate.atStartOfDay();
 	     LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	     long totalAppointments =
 	    		 AppointRepo
 	                     .countByDoctorDoctorIdAndAppointmentDateBetween(
@@ -111,7 +96,6 @@ public class AppointmentController {
 	     response.put("doctorName", doctor.getdName());
 	     response.put("date", date);
 	     response.put("totalAppointments", totalAppointments);
-
 	     return ResponseEntity.ok(response);
 	 }
 }

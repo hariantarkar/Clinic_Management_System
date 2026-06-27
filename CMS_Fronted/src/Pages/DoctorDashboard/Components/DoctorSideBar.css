@@ -1,0 +1,7 @@
+/* Doctor-specific sidebar tweaks layered on top of the shared .sidebar /
+   .nav-item classes defined in DoctorDashboard.css. Kept in its own file
+   per-component, even though it's small right now. */
+
+.sidebar-subtitle {
+  color: #93c5fd;
+}

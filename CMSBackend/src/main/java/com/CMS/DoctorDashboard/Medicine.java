@@ -16,7 +16,10 @@ public class Medicine {
     private String medicineName;
 
     private String dosage;
+    private String instructions;
 
+    @ManyToOne
+    private Prescription prescription;
     public Long getMedicineId() {
 		return medicineId;
 	}
@@ -57,10 +60,7 @@ public class Medicine {
 		this.prescription = prescription;
 	}
 
-	private String instructions;
-
-    @ManyToOne
-    private Prescription prescription;
+	
 
 	
 }

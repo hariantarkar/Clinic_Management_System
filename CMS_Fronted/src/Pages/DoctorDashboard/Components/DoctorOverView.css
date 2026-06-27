@@ -1,0 +1,43 @@
+/* .search-input.do-date-input (two classes) beats the shared single-class
+   .search-input rule regardless of CSS import order, so the date input
+   reliably stays narrow instead of stretching full width. */
+.search-input.do-date-input {
+  width: auto;
+  max-width: 180px;
+}
+
+.do-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.do-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.do-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.do-stat-label {
+  font-size: 13px;
+  color: var(--text-gray);
+  margin: 2px 0 0;
+}
+
+.do-icon-green {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.do-icon-red {
+  background: var(--red-light);
+  color: var(--red);
+}

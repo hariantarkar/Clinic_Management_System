@@ -23,15 +23,13 @@ public class MedicalRecordsManagementController {
 	
 	@Autowired
 	private AppointmentRepository appointmentRepository;
-	
 	@Autowired
 	private DoctorRepository doctorRepository;
+	
 	@GetMapping("/doctor/patientPrescriptions/{patientId}")
 	public ResponseEntity<?> getPatientPrescriptions(@PathVariable Integer patientId) {
-
 	    Register patient = registerRepository.findById(patientId)
 	            .orElseThrow(() -> new RuntimeException("Patient not found"));
-
 	    return ResponseEntity.ok(
 	            prescriptionRepository.findByPatientOrderByPrescriptionIdDesc(patient)
 	    );
@@ -40,13 +38,10 @@ public class MedicalRecordsManagementController {
 	public ResponseEntity<?> getLastVisit(
 	        @PathVariable Long doctorId,
 	        @PathVariable Integer patientId) {
-
 	    Doctor doctor = doctorRepository.findById(doctorId)
 	            .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	    Register patient = registerRepository.findById(patientId)
 	            .orElseThrow(() -> new RuntimeException("Patient not found"));
-
 	    AppointmentEntity lastVisit =
 	            appointmentRepository
 	                    .findTopByDoctorAndPatientAndStatusOrderByAppointmentIdDesc(
