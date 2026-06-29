@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getUpcomingAppointments } from '../api/doctorApi';
 import EmptyState from '../../patient-dashboard/components/EmptyState';
 import ConsultationPanel from './ConsultationPanel';
+import PatientHistoryPanel from './PatientHistoryPanel';
 import { ClipboardListIcon } from '../../patient-dashboard/components/icons';
 import './UpcomingAppointments.css';
 
@@ -23,7 +24,9 @@ export default function UpcomingAppointments({ doctorId }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [expandedId, setExpandedId] = useState(null);
+
+  // Only one panel open at a time: { id, type: 'consultation' | 'history' }
+  const [expanded, setExpanded] = useState(null);
 
   const loadAppointments = useCallback(async () => {
     if (!doctorId) return;
@@ -43,10 +46,14 @@ export default function UpcomingAppointments({ doctorId }) {
     loadAppointments();
   }, [loadAppointments]);
 
+  const toggleExpanded = (id, type) => {
+    setExpanded((prev) => (prev && prev.id === id && prev.type === type ? null : { id, type }));
+  };
+
   const handleConsultationDone = () => {
-    setExpandedId(null);
-    // This list only shows status="BOOKED" appointments — once completed,
-    // the appointment naturally drops off after this refresh.
+    setExpanded(null);
+    // This list only shows status="BOOKED" appointments from today onward —
+    // once completed, the appointment naturally drops off after this refresh.
     loadAppointments();
   };
 
@@ -83,7 +90,8 @@ export default function UpcomingAppointments({ doctorId }) {
           <div className="ua-list">
             {appointments.map((appt) => {
               const id = appt.appointmentId ?? appt.id;
-              const isExpanded = expandedId === id;
+              const isConsultationOpen = expanded?.id === id && expanded.type === 'consultation';
+              const isHistoryOpen = expanded?.id === id && expanded.type === 'history';
               return (
                 <div key={id} className="ua-item">
                   <div className="ua-row">
@@ -102,19 +110,32 @@ export default function UpcomingAppointments({ doctorId }) {
                         {appt.status ?? 'Booked'}
                       </span>
                     </div>
-                    <div>
-                      <button className="btn-primary" onClick={() => setExpandedId(isExpanded ? null : id)}>
-                        {isExpanded ? 'Close' : 'Start Consultation'}
+                    <div className="ua-actions">
+                      <button
+                        className="btn-cancel ua-history-btn"
+                        onClick={() => toggleExpanded(id, 'history')}
+                      >
+                        {isHistoryOpen ? 'Close' : 'View History'}
+                      </button>
+                      <button
+                        className="btn-primary"
+                        onClick={() => toggleExpanded(id, 'consultation')}
+                      >
+                        {isConsultationOpen ? 'Close' : 'Start Consultation'}
                       </button>
                     </div>
                   </div>
 
-                  {isExpanded && (
+                  {isConsultationOpen && (
                     <ConsultationPanel
                       doctorId={doctorId}
                       appointment={appt}
                       onCompleted={handleConsultationDone}
                     />
+                  )}
+
+                  {isHistoryOpen && (
+                    <PatientHistoryPanel doctorId={doctorId} patient={appt.patient} />
                   )}
                 </div>
               );

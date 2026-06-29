@@ -2,6 +2,7 @@ package com.CMS.DoctorDashboard;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import com.CMS.PaitentDashboard.AppointmentRepository;
 
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -87,7 +89,31 @@ public class DoctorDashBoardController {
 	     return ResponseEntity.status(HttpStatus.CREATED)
 	             .body(savedSlot);
 	 }
-	 @PatchMapping("/doctor/updateSlot/{slotId}")
+
+		/*
+		 * @PutMapping("/doctor/updateSlot/{slotId}") public ResponseEntity<?>
+		 * updateSlot(
+		 * 
+		 * @PathVariable Long slotId,
+		 * 
+		 * @RequestBody DoctorSlot updatedSlot) {
+		 * 
+		 * DoctorSlot existingSlot = slotRepository.findById(slotId) .orElseThrow(() ->
+		 * new RuntimeException("Slot not found"));
+		 * 
+		 * // Allow update only before slot start time if
+		 * (LocalDateTime.now().isAfter(existingSlot.getStartTime())) { throw new
+		 * RuntimeException( "Cannot update slot. Start time has already passed."); }
+		 * 
+		 * if (updatedSlot.getStartTime() != null) {
+		 * existingSlot.setStartTime(updatedSlot.getStartTime()); }
+		 * 
+		 * if (updatedSlot.getEndTime() != null) {
+		 * existingSlot.setEndTime(updatedSlot.getEndTime()); }
+		 * 
+		 * return ResponseEntity.ok(slotRepository.save(existingSlot)); }
+		 */
+	 @PutMapping("/doctor/updateSlot/{slotId}")
 	 public ResponseEntity<?> updateSlot(
 	         @PathVariable Long slotId,
 	         @RequestBody DoctorSlot updatedSlot) {
@@ -95,12 +121,10 @@ public class DoctorDashBoardController {
 	     DoctorSlot existingSlot = slotRepository.findById(slotId)
 	             .orElseThrow(() -> new RuntimeException("Slot not found"));
 
-	     // Allow update only before slot start time
 	     if (LocalDateTime.now().isAfter(existingSlot.getStartTime())) {
-	         throw new RuntimeException(
-	                 "Cannot update slot. Start time has already passed.");
+	         throw new RuntimeException("Cannot update slot. Start time has already passed.");
 	     }
-	     
+
 	     if (updatedSlot.getStartTime() != null) {
 	         existingSlot.setStartTime(updatedSlot.getStartTime());
 	     }
@@ -128,14 +152,27 @@ public class DoctorDashBoardController {
 
 	     return ResponseEntity.ok(slots);
 	 }
+		/*
+		 * @GetMapping("/doctor/upcomingAppointments/{doctorId}") public
+		 * ResponseEntity<List<AppointmentEntity>> getUpcomingAppointments(
+		 * 
+		 * @PathVariable Long doctorId) {
+		 * 
+		 * return ResponseEntity.ok( AppointRepo.findByDoctorDoctorIdAndStatus(
+		 * doctorId, "BOOKED" ) ); }
+		 */
+	 
 	 @GetMapping("/doctor/upcomingAppointments/{doctorId}")
 	 public ResponseEntity<List<AppointmentEntity>> getUpcomingAppointments(
 	         @PathVariable Long doctorId) {
 
+	     LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+
 	     return ResponseEntity.ok(
-	    		 AppointRepo.findByDoctorDoctorIdAndStatus(
+	             AppointRepo.findByDoctorDoctorIdAndStatusAndAppointmentDateGreaterThanEqual(
 	                     doctorId,
-	                     "BOOKED"
+	                     "BOOKED",
+	                     startOfToday
 	             )
 	     );
 	 }

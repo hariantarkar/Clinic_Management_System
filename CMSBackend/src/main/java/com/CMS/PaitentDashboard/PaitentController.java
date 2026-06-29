@@ -170,40 +170,62 @@ public class PaitentController {
 
 		return ResponseEntity.ok(appointments);
 	}
-
 	@PutMapping("/patient/cancel/{appointmentId}")
 	public ResponseEntity<String> cancelAppointment(@PathVariable Long appointmentId) {
 
-		System.out.println("Step 1");
+	    AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
+	            .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-		AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
-				.orElseThrow(() -> new RuntimeException("Appointment not found"));
+	    DoctorSlot slot = appointment.getSlot();
 
-		System.out.println("Step 2");
+	    if (LocalDateTime.now().isAfter(slot.getStartTime())) {
+	        throw new RuntimeException("Appointment cannot be cancelled after scheduled time");
+	    }
 
-		DoctorSlot slot = appointment.getSlot();
+	    appointment.setStatus("CANCELLED");
+	    appointmentRepository.save(appointment);
 
-		System.out.println("Step 3");
+	    // Free up the slot — undo the increment that bookAppointment applied.
+	    // Floor at 0 so this can never go negative if called more than once
+	    // on the same appointment somehow.
+	    int updatedCount = Math.max(0, slot.getBookedAppointments() - 1);
+	    slot.setBookedAppointments(updatedCount);
+	    slot.setAvailable(true);
+	    slotRepository.save(slot);
 
-		if (LocalDateTime.now().isAfter(slot.getStartTime())) {
-			throw new RuntimeException("Appointment cannot be cancelled after scheduled time");
-		}
-
-		System.out.println("Step 4");
-
-		appointment.setStatus("CANCELLED");
-		appointmentRepository.save(appointment);
-
-		System.out.println("Step 5");
-
-		slot.setAvailable(true);
-		slotRepository.save(slot);
-
-		System.out.println("Step 6");
-
-		return ResponseEntity.ok("Appointment cancelled successfully");
+	    return ResponseEntity.ok("Appointment cancelled successfully");
 	}
 
+	/*
+	 * @PutMapping("/patient/cancel/{appointmentId}") public ResponseEntity<String>
+	 * cancelAppointment(@PathVariable Long appointmentId) {
+	 * 
+	 * System.out.println("Step 1");
+	 * 
+	 * AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
+	 * .orElseThrow(() -> new RuntimeException("Appointment not found"));
+	 * 
+	 * System.out.println("Step 2");
+	 * 
+	 * DoctorSlot slot = appointment.getSlot();
+	 * 
+	 * System.out.println("Step 3");
+	 * 
+	 * if (LocalDateTime.now().isAfter(slot.getStartTime())) { throw new
+	 * RuntimeException("Appointment cannot be cancelled after scheduled time"); }
+	 * 
+	 * System.out.println("Step 4");
+	 * 
+	 * appointment.setStatus("CANCELLED"); appointmentRepository.save(appointment);
+	 * 
+	 * System.out.println("Step 5");
+	 * 
+	 * slot.setAvailable(true); slotRepository.save(slot);
+	 * 
+	 * System.out.println("Step 6");
+	 * 
+	 * return ResponseEntity.ok("Appointment cancelled successfully"); }
+	 */
 	@GetMapping("/patient/patientSidePrescriptions/{patientId}")
 	public ResponseEntity<?> getPatientPrescriptions(@PathVariable Integer patientId) {
 

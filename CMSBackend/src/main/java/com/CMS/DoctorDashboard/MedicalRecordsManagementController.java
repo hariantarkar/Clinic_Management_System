@@ -53,4 +53,15 @@ public class MedicalRecordsManagementController {
 
 	    return ResponseEntity.ok(lastVisit);
 	}
+	@Autowired
+	private MedicineRepository medicineRepository;
+	
+	@GetMapping("/doctor/medicinesByPatient/{patientId}")
+	public ResponseEntity<?> getMedicinesByPatientForDoctor(@PathVariable Integer patientId) {
+
+	    Register patient = registerRepository.findById(patientId)
+	            .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+	    return ResponseEntity.ok(medicineRepository.findByPrescription_Patient_Id(patientId));
+	}
 }

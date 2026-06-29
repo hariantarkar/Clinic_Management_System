@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { addPrescription, addMedicine, completeConsultation, getPatientPrescriptions } from '../api/doctorApi';
 import './ConsultationPanel.css';
 
@@ -28,6 +28,20 @@ export default function ConsultationPanel({ doctorId, appointment, onCompleted }
 
   const [completing, setCompleting] = useState(false);
   const [message, setMessage] = useState(null);
+  const messageTimeoutRef = useRef(null);
+
+  // Clear any pending auto-dismiss timer if the component unmounts
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
+  }, []);
+
+  const showMessage = (msg) => {
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    setMessage(msg);
+    messageTimeoutRef.current = setTimeout(() => setMessage(null), 4000);
+  };
 
   // Resume an in-progress consultation if the panel was closed and reopened
   // before "Complete Consultation" was clicked — otherwise a second
@@ -63,12 +77,11 @@ export default function ConsultationPanel({ doctorId, appointment, onCompleted }
   const handleSavePrescription = async (e) => {
     e.preventDefault();
     setSavingRx(true);
-    setMessage(null);
     try {
       const saved = await addPrescription(doctorId, patientId, appointmentId, { diagnosis, remarks });
       setPrescription(saved);
     } catch (err) {
-      setMessage({ type: 'error', text: err.message || 'Could not save diagnosis.' });
+      showMessage({ type: 'error', text: err.message || 'Could not save diagnosis.' });
     } finally {
       setSavingRx(false);
     }
@@ -78,13 +91,13 @@ export default function ConsultationPanel({ doctorId, appointment, onCompleted }
     e.preventDefault();
     if (!prescription) return;
     setSavingMed(true);
-    setMessage(null);
     try {
       const saved = await addMedicine(prescription.prescriptionId, medForm);
       setMedicines((list) => [...list, saved]);
       setMedForm({ medicineName: '', dosage: '', instructions: '' });
+      showMessage({ type: 'success', text: 'Medicine added.' });
     } catch (err) {
-      setMessage({ type: 'error', text: err.message || 'Could not add medicine.' });
+      showMessage({ type: 'error', text: err.message || 'Could not add medicine.' });
     } finally {
       setSavingMed(false);
     }
@@ -93,12 +106,11 @@ export default function ConsultationPanel({ doctorId, appointment, onCompleted }
   const handleComplete = async () => {
     if (!prescription) return;
     setCompleting(true);
-    setMessage(null);
     try {
       await completeConsultation(prescription.prescriptionId);
       onCompleted();
     } catch (err) {
-      setMessage({ type: 'error', text: err.message || 'Could not complete consultation.' });
+      showMessage({ type: 'error', text: err.message || 'Could not complete consultation.' });
       setCompleting(false);
     }
   };

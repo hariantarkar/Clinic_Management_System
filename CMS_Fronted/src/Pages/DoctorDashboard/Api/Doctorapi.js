@@ -7,8 +7,8 @@ export async function getMyProfile() {
 }
 
 /** PUT /doctor/Update/profile */
-export async function updateProfile(payload) {
-  const { data } = await API.put("/doctor/Update/profile", payload);
+export async function updateProfile(slotId) {
+  const { data } = await API.put("/doctor/Update/profile", slotId);
   return data;
 }
 
@@ -18,9 +18,9 @@ export async function addSlot(doctorId, slot) {
   return data;
 }
 
-/** PATCH /doctor/updateSlot/{slotId} */
+/** PUT /doctor/updateSlot/{slotId} */
 export async function updateSlot(slotId, updatedSlot) {
-  const { data } = await API.patch(`/doctor/updateSlot/${slotId}`, updatedSlot);
+  const { data } = await API.put(`/doctor/updateSlot/${slotId}`, updatedSlot);
   return data;
 }
 
@@ -35,7 +35,11 @@ export async function getUpcomingAppointments(doctorId) {
   const { data } = await API.get(`/doctor/upcomingAppointments/${doctorId}`);
   return data;
 }
-
+/** GET /doctor/medicinesByPatient/{patientId} */
+export async function getMedicinesByPatient(patientId) {
+  const { data } = await API.get(`/doctor/medicinesByPatient/${patientId}`);
+  return data;
+}
 /** GET /doctor/completedCheckupsByDoctor?doctorId=&date= */
 export async function getCompletedCheckups(doctorId, date) {
   const { data } = await API.get("/doctor/completedCheckupsByDoctor", {

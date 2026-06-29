@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { addSlot, getUpcomingSlots, updateSlot } from '../api/doctorApi';
 import EmptyState from '../../patient-dashboard/components/EmptyState';
 import { CalendarPlusIcon } from '../../patient-dashboard/components/icons';
@@ -28,10 +28,24 @@ export default function ManageSlots({ doctorId }) {
   const [form, setForm] = useState({ startTime: '', endTime: '', appointmentDuration: 30 });
   const [submitting, setSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState(null);
+  const messageTimeoutRef = useRef(null);
 
   const [editingSlotId, setEditingSlotId] = useState(null);
   const [editForm, setEditForm] = useState({ startTime: '', endTime: '' });
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // Clear any pending auto-dismiss timer if the component unmounts
+  useEffect(() => {
+    return () => {
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
+  }, []);
+
+  const showFormMessage = (msg) => {
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    setFormMessage(msg);
+    messageTimeoutRef.current = setTimeout(() => setFormMessage(null), 4000);
+  };
 
   const loadSlots = useCallback(async () => {
     if (!doctorId) return;
@@ -55,18 +69,17 @@ export default function ManageSlots({ doctorId }) {
     e.preventDefault();
     if (!doctorId) return;
     setSubmitting(true);
-    setFormMessage(null);
     try {
       await addSlot(doctorId, {
         startTime: form.startTime,
         endTime: form.endTime,
         appointmentDuration: Number(form.appointmentDuration),
       });
-      setFormMessage({ type: 'success', text: 'Slot added successfully.' });
+      showFormMessage({ type: 'success', text: 'Slot added successfully.' });
       setForm({ startTime: '', endTime: '', appointmentDuration: 30 });
       loadSlots();
     } catch (err) {
-      setFormMessage({ type: 'error', text: err.message || 'Could not add slot.' });
+      showFormMessage({ type: 'error', text: err.message || 'Could not add slot.' });
     } finally {
       setSubmitting(false);
     }
@@ -93,9 +106,10 @@ export default function ManageSlots({ doctorId }) {
         endTime: editForm.endTime,
       });
       cancelEdit();
+      showFormMessage({ type: 'success', text: 'Slot updated successfully.' });
       loadSlots();
     } catch (err) {
-      setError(err.message || 'Could not update slot.');
+      showFormMessage({ type: 'error', text: err.message || 'Could not update slot.' });
     } finally {
       setSavingEdit(false);
     }
@@ -230,5 +244,3 @@ export default function ManageSlots({ doctorId }) {
     </>
   );
 }
-
-
