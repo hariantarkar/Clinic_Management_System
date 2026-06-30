@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { updateProfile } from '../api/doctorApi';
 import './DoctorProfile.css';
 
@@ -11,38 +11,108 @@ function UserIcon(props) {
   );
 }
 
-export default function DoctorProfile({ doctor, onProfileUpdated }) {
+export default function DoctorProfile({ doctor, onProfileUpdated,onLogout }) {
+  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ email: '', contactNumber: '' });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const messageTimeoutRef = useRef(null);
 
+  // Clear any pending auto-dismiss timer if the component unmounts
   useEffect(() => {
-    if (doctor) {
-      setForm({
-        email: doctor.email ?? '',
-        contactNumber: doctor.contactNumber ?? '',
-      });
-    }
-  }, [doctor]);
+    return () => {
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
+  }, []);
 
+  const showMessage = (msg) => {
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    setMessage(msg);
+    messageTimeoutRef.current = setTimeout(() => setMessage(null), 4000);
+  };
+
+  const startEditing = () => {
+    setForm({
+      email: doctor.email ?? '',
+      contactNumber: doctor.contactNumber ?? '',
+    });
+    setFieldErrors({});
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setFieldErrors({});
+  };
+
+  const handleChange = (field) => (e) => {
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((errs) => ({ ...errs, [field]: undefined }));
+    }
+  };
+/*
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
+    setFieldErrors({});
     try {
       const msg = await updateProfile(form);
-      setMessage({ type: 'success', text: typeof msg === 'string' ? msg : 'Profile updated successfully.' });
+      showMessage({ type: 'success', text: typeof msg === 'string' ? msg : 'Profile updated successfully.' });
+      setEditing(false);
       onProfileUpdated?.();
     } catch (err) {
-      setMessage({ type: 'error', text: err.message || 'Could not update profile.' });
+      const data = err.response?.data;
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // 400 from @Valid on DoctorProfileUpdate: { email: "...", contactNumber: "..." }
+        setFieldErrors(data);
+        showMessage({ type: 'error', text: 'Please fix the errors below and try again.' });
+      } else {
+        showMessage({ type: 'error', text: err.message || 'Could not update profile.' });
+      }
     } finally {
       setSaving(false);
     }
   };
-
+*/
   if (!doctor) {
     return <p className="state-text">Loading profile...</p>;
   }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setFieldErrors({});
+    const emailChanged = form.email !== doctor.email;
+    try {
+      const msg = await updateProfile(form);
+      setEditing(false);
+
+      if (emailChanged) {
+        showMessage({
+          type: 'success',
+          text: 'Email updated. You\'ll be logged out in a few seconds — please log in again with your new email.',
+        });
+        if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = setTimeout(() => {
+          onLogout?.();
+        }, 5000);
+      } else {
+        showMessage({ type: 'success', text: typeof msg === 'string' ? msg : 'Profile updated successfully.' });
+        onProfileUpdated?.();
+      }
+    } catch (err) {
+      const data = err.response?.data;
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        setFieldErrors(data);
+        showMessage({ type: 'error', text: 'Please fix the errors below and try again.' });
+      } else {
+        showMessage({ type: 'error', text: err.message || 'Could not update profile.' });
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <>
@@ -86,7 +156,7 @@ export default function DoctorProfile({ doctor, onProfileUpdated }) {
         <div className="card-header">
           <div className="icon-circle"><UserIcon /></div>
           <div>
-            <h3 className="card-title">Update Contact Details</h3>
+            <h3 className="card-title">Contact Details</h3>
             <p className="card-subtitle">Qualification, experience, and specialization can't be changed here.</p>
           </div>
         </div>
@@ -97,29 +167,56 @@ export default function DoctorProfile({ doctor, onProfileUpdated }) {
           </p>
         )}
 
-        <form className="dp-form" onSubmit={handleSubmit}>
-          <div className="dp-field">
-            <label>New Email  </label>
-            <input
-              type="email"
-              required
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            />
-          </div>
-          <div className="dp-field">
-            <label>New Contact Number</label>
-            <input
-              type="text"
-              required
-              value={form.contactNumber}placeholder='Enter New contcat number'
-              onChange={(e) => setForm((f) => ({ ...f, contactNumber: e.target.value }))}
-            />
-          </div>
-          <button className="btn-primary" type="submit" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </form>
+        {!editing ? (
+          <>
+            <div className="dp-readonly-grid">
+              <div>
+                <span className="dp-label">Current Email</span>
+                <p className="dp-value">{doctor.email ?? '—'}</p>
+              </div>
+              <div>
+                <span className="dp-label">Current Contact Number</span>
+                <p className="dp-value">{doctor.contactNumber ?? '—'}</p>
+              </div>
+            </div>
+            <button className="btn-primary dp-edit-btn" onClick={startEditing}>
+              Update Contact Details
+            </button>
+          </>
+        ) : (
+          <form className="dp-form" onSubmit={handleSubmit}>
+            <div className="dp-field">
+              <label>New Email</label>
+              <input
+                type="email"
+                required
+                value={form.email}
+                onChange={handleChange('email')}
+                placeholder="Enter new email"
+              />
+              {fieldErrors.email && <span className="dp-field-error">{fieldErrors.email}</span>}
+            </div>
+            <div className="dp-field">
+              <label>New Contact Number</label>
+              <input
+                type="text"
+                required
+                value={form.contactNumber}
+                onChange={handleChange('contactNumber')}
+                placeholder="Enter new contact number"
+              />
+              {fieldErrors.contactNumber && <span className="dp-field-error">{fieldErrors.contactNumber}</span>}
+            </div>
+            <div className="dp-form-actions">
+              <button className="btn-primary" type="submit" disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button className="btn-cancel" type="button" onClick={cancelEditing} disabled={saving}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </section>
     </>
   );

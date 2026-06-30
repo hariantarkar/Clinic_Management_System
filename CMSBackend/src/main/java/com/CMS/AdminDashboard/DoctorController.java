@@ -25,6 +25,8 @@ import com.CMS.PaitentDashboard.AppointmentRepository;
 import com.CMS.Register.entity.Register;
 import com.CMS.RegisterRepository.RegisterRepo;
 
+import jakarta.validation.Valid;
+
 @RestController
 public class DoctorController {
 
@@ -40,7 +42,7 @@ public class DoctorController {
 	 private AppointmentRepository  AppointRepo;
 		
 	 @PostMapping("/admin/addNewDoctor")
-	 public ResponseEntity<?> addDoctor(@RequestBody Doctor doctor) {
+	 public ResponseEntity<?> addDoctor(@Valid @RequestBody Doctor doctor) {
 
 	     if (doctorRepository.findByEmail(doctor.getEmail()).isPresent()) {
 	         throw new RuntimeException("Doctor already exists in system");

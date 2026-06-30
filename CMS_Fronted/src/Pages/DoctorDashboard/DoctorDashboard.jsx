@@ -83,8 +83,7 @@ export default function DoctorDashboard() {
         ) : doctorError ? (
           <p className="state-text state-error">{doctorError}</p>
         ) : (
-          <ActiveComponent doctorId={doctorId} doctor={doctor} onProfileUpdated={loadProfile} />
-        )}
+<ActiveComponent doctorId={doctorId} doctor={doctor} onProfileUpdated={loadProfile} onLogout={handleLogout} />        )}
       </main>
     </div>
   );

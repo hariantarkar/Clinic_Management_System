@@ -21,6 +21,32 @@ API.interceptors.request.use((config) => {
 // Normalize errors so every component can keep doing `catch(err) { err.message }`
 // and get the backend's actual message instead of axios's generic one.
 
+
+
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const data = error.response?.data;
+
+    let message;
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      // Field-validation error object, e.g. { email: "...", contactNumber: "..." }
+      message = data.message || Object.values(data)[0] || "Please fix the errors below.";
+    } else if (typeof data === 'string' && data) {
+      message = data;
+    } else {
+      message = error.message || "Something went wrong. Please try again.";
+    }
+
+    const wrappedError = new Error(message);
+    wrappedError.response = error.response;   // <-- preserve the original response
+    return Promise.reject(wrappedError);
+  }
+);
+export default API;
+
+/*
 API.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -34,5 +60,4 @@ API.interceptors.response.use(
     return Promise.reject(new Error(message || error.message || "Something went wrong. Please try again."));
   }
 );
-
-export default API;
+*/
