@@ -1,9 +1,11 @@
 package com.CMS.PaitentDashboard;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -101,7 +103,9 @@ public class PaitentController {
 	@PostMapping("/patient/book/{slotId}/{patientId}")
 	public ResponseEntity<?> bookAppointment(
 	        @PathVariable Long slotId,
-	        @PathVariable Integer patientId) {
+	        @PathVariable Integer patientId,
+	        @RequestParam("appointmentTime")
+	        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime appointmentTime) {
 
 	    DoctorSlot slot = slotRepository.findById(slotId)
 	            .orElseThrow(() -> new RuntimeException("Slot not found"));
@@ -112,26 +116,35 @@ public class PaitentController {
 	    if (patient.getUserType() != Register.UserType.patient) {
 	        throw new RuntimeException("Invalid patient account");
 	    }
-
 	    boolean alreadyBooked =
-	            appointmentRepository
-	            .existsByPatient_IdAndSlot_SlotIdAndStatus(
-	                    patientId,
-	                    slotId,
-	                    "Booked");                 // <-- only blocks active bookings now
-
+	            appointmentRepository.existsByPatient_IdAndSlot_SlotIdAndStatusAndAppointmentDateAfter(
+	                    patientId, slotId, "Booked", LocalDateTime.now());
 	    if (alreadyBooked) {
-	        throw new RuntimeException("You have already booked this slot");
+	        throw new RuntimeException("You already have an upcoming booking in this slot");
 	    }
+	    
 
 	    if (slot.getBookedAppointments() >= slot.getMaxAppointments()) {
 	        throw new RuntimeException("No appointment slots available");
 	    }
 
-	    LocalDateTime appointmentTime =
-	            slot.getStartTime().plusMinutes(
-	                    (long) slot.getBookedAppointments()
-	                            * slot.getAppointmentDuration());
+	    // Validate the requested time actually lines up with this slot's
+	    // duration grid (e.g. 4:00, 4:30, 5:00 for a 30-min slot 4–6pm)
+	    long minutesFromStart = Duration.between(slot.getStartTime(), appointmentTime).toMinutes();
+	    boolean withinRange = !appointmentTime.isBefore(slot.getStartTime())
+	            && appointmentTime.isBefore(slot.getEndTime());
+	    boolean alignedToDuration = minutesFromStart >= 0
+	            && minutesFromStart % slot.getAppointmentDuration() == 0;
+
+	    if (!withinRange || !alignedToDuration) {
+	        throw new RuntimeException("Invalid appointment time for this slot");
+	    }
+
+	    boolean timeTaken = appointmentRepository.existsBySlot_SlotIdAndAppointmentDateAndStatus(
+	            slotId, appointmentTime, "Booked");
+	    if (timeTaken) {
+	        throw new RuntimeException("This time is already booked. Please choose another.");
+	    }
 
 	    AppointmentEntity appointment = new AppointmentEntity();
 	    appointment.setDoctor(slot.getDoctor());
@@ -150,13 +163,13 @@ public class PaitentController {
 	@GetMapping("/patient/doctorsSlot/{doctorId}/availability")
 	public ResponseEntity<?> getAvailability(@PathVariable Long doctorId) {
 
-		List<DoctorSlot> slots = patientService.getAvailableSlots(doctorId);
+	    List<SlotAvailabilityResponse> slots = patientService.getAvailableSlots(doctorId);
 
-		if (slots.isEmpty()) {
-			return ResponseEntity.ok("No available slots found for this doctor.");
-		}
+	    if (slots.isEmpty()) {
+	        return ResponseEntity.ok("No available slots found for this doctor.");
+	    }
 
-		return ResponseEntity.ok(slots);
+	    return ResponseEntity.ok(slots);
 	}
 
 	@GetMapping("/patient/upcomingAppointments/{patientId}")
@@ -176,10 +189,12 @@ public class PaitentController {
 	    AppointmentEntity appointment = appointmentRepository.findById(appointmentId)
 	            .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-	    DoctorSlot slot = appointment.getSlot();
+	    if ("CANCELLED".equals(appointment.getStatus())) {
+	        throw new RuntimeException("This appointment is already cancelled");
+	    }
 
-	    if (LocalDateTime.now().isAfter(slot.getStartTime())) {
-	        throw new RuntimeException("Appointment cannot be cancelled after scheduled time");
+	    if (LocalDateTime.now().isAfter(appointment.getAppointmentDate())) {
+	        throw new RuntimeException("Appointment cannot be cancelled after its scheduled time");
 	    }
 
 	    appointment.setStatus("CANCELLED");
@@ -188,6 +203,7 @@ public class PaitentController {
 	    // Free up the slot — undo the increment that bookAppointment applied.
 	    // Floor at 0 so this can never go negative if called more than once
 	    // on the same appointment somehow.
+	    DoctorSlot slot = appointment.getSlot();
 	    int updatedCount = Math.max(0, slot.getBookedAppointments() - 1);
 	    slot.setBookedAppointments(updatedCount);
 	    slot.setAvailable(true);
@@ -195,7 +211,6 @@ public class PaitentController {
 
 	    return ResponseEntity.ok("Appointment cancelled successfully");
 	}
-
 	/*
 	 * @PutMapping("/patient/cancel/{appointmentId}") public ResponseEntity<String>
 	 * cancelAppointment(@PathVariable Long appointmentId) {

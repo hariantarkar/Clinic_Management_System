@@ -26,11 +26,56 @@ function getDoctorName(doctor) {
   return doctor.dName ?? doctor.dname ?? doctor.name ?? '—';
 }
 
+function isAppointmentPast(appt) {
+  const time = new Date(appt.appointmentDate);
+  return !Number.isNaN(time.getTime()) && time <= new Date();
+}
+
+// The backend only marks an appointment "CANCELLED" or leaves it "Booked" —
+// there's no separate "missed"/"no-show" status. So a "Booked" appointment
+// whose time has already passed means the patient never attended and staff
+// never marked it completed. We treat that as "missed" for display only.
+function AppointmentRow({ appt, onCancel, cancellingId, missed }) {
+  const id = appt.appointmentId ?? appt.id;
+  const statusRaw = appt.status ?? 'Scheduled';
+  const statusKey = statusRaw.toLowerCase();
+
+  return (
+    <div className="table-grid-row grid-cols-appointments">
+      <div>
+        <p className="doctor-name">{getDoctorName(appt.doctor)}</p>
+        <p className="doctor-meta">{appt.doctor?.specialization ?? '—'}</p>
+      </div>
+      <div>{formatDate(appt.appointmentDate)}</div>
+      <div>{formatTime(appt.appointmentDate)}</div>
+      <div>
+        <span className={`status-badge ${missed ? 'status-cancelled' : `status-${statusKey}`}`}>
+          {missed ? 'Missed' : statusRaw}
+        </span>
+      </div>
+      <div>
+        {missed ? (
+          <span className="doctor-meta">—</span>
+        ) : (
+          <button
+            className="btn-cancel"
+            disabled={cancellingId === id}
+            onClick={() => onCancel(id)}
+          >
+            {cancellingId === id ? 'Cancelling...' : 'Cancel'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function MyAppointments({ patientId }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
 
   const loadAppointments = useCallback(async () => {
     setLoading(true);
@@ -49,13 +94,12 @@ export default function MyAppointments({ patientId }) {
     loadAppointments();
   }, [loadAppointments]);
 
-  const [successMsg, setSuccessMsg] = useState(null);
   const handleCancel = async (appointmentId) => {
     setCancellingId(appointmentId);
     setError(null);
     setSuccessMsg(null);
     try {
-      await cancelAppointment(appointmentId);
+      const msg = await cancelAppointment(appointmentId);
       setSuccessMsg(typeof msg === 'string' ? msg : 'Appointment cancelled successfully');
       await loadAppointments();
     } catch (err) {
@@ -64,6 +108,14 @@ export default function MyAppointments({ patientId }) {
       setCancellingId(null);
     }
   };
+
+  const upcoming = appointments
+    .filter((a) => !isAppointmentPast(a))
+    .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+
+  const missed = appointments
+    .filter((a) => isAppointmentPast(a))
+    .sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
 
   return (
     <>
@@ -77,11 +129,10 @@ export default function MyAppointments({ patientId }) {
 
       <section className="card">
         <div className="card-header">
-          
           <div className="icon-circle"><CalendarCheckIcon /></div>
           <div>
-            <h3 className="card-title">Appointment History</h3>
-            <p className="card-subtitle">View and manage your booked consultations.</p>
+            <h3 className="card-title">Upcoming Appointments</h3>
+            <p className="card-subtitle">Your scheduled consultations, soonest first.</p>
           </div>
         </div>
         {successMsg && <p className="state-text state-success">{successMsg}</p>}
@@ -90,11 +141,11 @@ export default function MyAppointments({ patientId }) {
           <p className="state-text">Loading appointments...</p>
         ) : error ? (
           <p className="state-text state-error">{error}</p>
-        ) : appointments.length === 0 ? (
+        ) : upcoming.length === 0 ? (
           <EmptyState
             icon={<CalendarCheckIcon />}
-            title="No Appointments Found"
-            subtitle="You haven't booked any appointments yet."
+            title="No Upcoming Appointments"
+            subtitle="You don't have any appointments scheduled right now."
           />
         ) : (
           <div className="table-grid">
@@ -105,34 +156,48 @@ export default function MyAppointments({ patientId }) {
               <span>Status</span>
               <span>Action</span>
             </div>
-            {appointments.map((appt) => {
-              const id = appt.appointmentId ?? appt.id;
-              const statusRaw = appt.status ?? 'Scheduled';
-              const statusKey = statusRaw.toLowerCase();
-              return (
-                <div key={id} className="table-grid-row grid-cols-appointments">
-                  <div>
-                    <p className="doctor-name">{getDoctorName(appt.doctor)}</p>
-                    <p className="doctor-meta">{appt.doctor?.specialization ?? '—'}</p>
-                  </div>
-                  <div>{formatDate(appt.appointmentDate)}</div>
-                  <div>{formatTime(appt.appointmentDate)}</div>
-                  <div><span className={`status-badge status-${statusKey}`}>{statusRaw}</span></div>
-                  <div>
-                    <button
-                      className="btn-cancel"
-                      disabled={cancellingId === id || statusKey === 'cancelled'}
-                      onClick={() => handleCancel(id)}
-                    >
-                      {cancellingId === id ? 'Cancelling...' : 'Cancel'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {upcoming.map((appt) => (
+              <AppointmentRow
+                key={appt.appointmentId ?? appt.id}
+                appt={appt}
+                onCancel={handleCancel}
+                cancellingId={cancellingId}
+                missed={false}
+              />
+            ))}
           </div>
         )}
       </section>
+
+      {!loading && !error && missed.length > 0 && (
+        <section className="card">
+          <div className="card-header">
+            <div className="icon-circle"><CalendarCheckIcon /></div>
+            <div>
+              <h3 className="card-title">Missed Appointments</h3>
+              <p className="card-subtitle">Past appointments that were never attended or updated.</p>
+            </div>
+          </div>
+          <div className="table-grid">
+            <div className="table-grid-header grid-cols-appointments">
+              <span>Doctor</span>
+              <span>Date</span>
+              <span>Time</span>
+              <span>Status</span>
+              <span>Action</span>
+            </div>
+            {missed.map((appt) => (
+              <AppointmentRow
+                key={appt.appointmentId ?? appt.id}
+                appt={appt}
+                onCancel={handleCancel}
+                cancellingId={cancellingId}
+                missed={true}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

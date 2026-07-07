@@ -27,6 +27,36 @@ function getInitials(name) {
   return initials.toUpperCase();
 }
 
+// Formats a Date as a "local" ISO-like string (no timezone conversion),
+// matching the plain LocalDateTime the backend expects — using
+// toISOString() here would shift the hour if the browser's timezone
+// differs from the server's.
+function toLocalIsoString(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+}
+
+// Breaks a slot's [startTime, endTime) window into individual bookable
+// times, spaced by the slot's appointmentDuration, and flags any that
+// are already taken based on the slot's bookedTimes list from the backend.
+function generateSlotTimes(slot) {
+  const times = [];
+  const start = new Date(slot.startTime);
+  const end = new Date(slot.endTime);
+  const duration = slot.appointmentDuration ?? 30;
+  const bookedSet = new Set((slot.bookedTimes ?? []).map((t) => new Date(t).getTime()));
+
+  let cursor = new Date(start);
+  while (cursor < end) {
+    times.push({
+      time: new Date(cursor),
+      isBooked: bookedSet.has(cursor.getTime()),
+    });
+    cursor = new Date(cursor.getTime() + duration * 60000);
+  }
+  return times;
+}
+
 export default function BookAppointment({ patientId }) {
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
@@ -38,7 +68,7 @@ export default function BookAppointment({ patientId }) {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState(null);
 
-  const [bookingSlotId, setBookingSlotId] = useState(null);
+  const [bookingKey, setBookingKey] = useState(null);
   const [bookingMessage, setBookingMessage] = useState(null);
   const messageTimeoutRef = useRef(null);
 
@@ -112,19 +142,21 @@ export default function BookAppointment({ patientId }) {
     handleViewSlots(doctor);
   };
 
-  const handleBookSlot = async (slot) => {
+  const handleBookSlot = async (slot, chosenTime) => {
     const slotId = slot.slotId ?? slot.id;
-    setBookingSlotId(slotId);
+    const key = `${slotId}-${chosenTime.getTime()}`;
+    setBookingKey(key);
     if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
     setBookingMessage(null);
     try {
-      const message = await bookSlot(slotId, patientId);
+      const appointmentTime = toLocalIsoString(chosenTime);
+      const message = await bookSlot(slotId, patientId, appointmentTime);
       setBookingMessage({ type: 'success', text: message || 'Appointment booked successfully.' });
-      await handleViewSlots(selectedDoctor); // refresh so the booked slot updates
+      await handleViewSlots(selectedDoctor); // refresh so booked times update
     } catch (err) {
-      setBookingMessage({ type: 'error', text: err.message || 'Booking failed. Please try another slot.' });
+      setBookingMessage({ type: 'error', text: err.message || 'Booking failed. Please try another time.' });
     } finally {
-      setBookingSlotId(null);
+      setBookingKey(null);
     }
     // Keep the message visible for a few seconds, then auto-dismiss
     messageTimeoutRef.current = setTimeout(() => setBookingMessage(null), 4000);
@@ -192,7 +224,8 @@ export default function BookAppointment({ patientId }) {
                   </div>
                   <div className="text-accent">{doctor.specialization ?? '—'}</div>
                   <div><BriefcaseIcon className="inline-icon" />{doctor.experienceYears ?? '—'} Years</div>
-<div className="text-fee"><RupeeIcon className="inline-icon" />{doctor.consultationFee ?? '—'}</div>                  <div>
+                  <div className="text-fee"><RupeeIcon className="inline-icon" />{doctor.consultationFee ?? '—'}</div>
+                  <div>
                     <button className="btn-primary" onClick={() => handleSelectDoctor(doctor)}>
                       View Slots
                     </button>
@@ -245,21 +278,35 @@ export default function BookAppointment({ patientId }) {
           <div className="slot-grid">
             {slots.map((slot) => {
               const slotId = slot.slotId ?? slot.id;
-              const isFull = (slot.bookedAppointments ?? 0) >= (slot.maxAppointments ?? Infinity);
-              const isUnavailable = slot.available === false || isFull;
-              const isBooking = bookingSlotId === slotId;
+              const isSlotFull = (slot.bookedAppointments ?? 0) >= (slot.maxAppointments ?? Infinity);
+              const times = generateSlotTimes(slot);
+
               return (
-                <div key={slotId} className={`slot-card ${isUnavailable ? 'slot-card-full' : ''}`}>
-                  <span className="slot-time">
+                <div key={slotId} className="slot-block">
+                  <p className="slot-block-title">
                     {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
-                  </span>
-                  <button
-                    className="slot-book-btn"
-                    disabled={isBooking || isUnavailable}
-                    onClick={() => handleBookSlot(slot)}
-                  >
-                    {isBooking ? 'Booking...' : isUnavailable ? 'Full' : 'Book Appointment'}
-                  </button>
+                  </p>
+                  <div className="slot-time-buttons">
+                    {times.map(({ time, isBooked }) => {
+                      const key = `${slotId}-${time.getTime()}`;
+                      const isThisBooking = bookingKey === key;
+                      const disabled = isBooked || isSlotFull || bookingKey !== null;
+                      return (
+                        <button
+                          key={key}
+                          className={`slot-time-btn ${isBooked ? 'slot-time-btn-taken' : ''}`}
+                          disabled={disabled}
+                          onClick={() => handleBookSlot(slot, time)}
+                        >
+                          {isThisBooking
+                            ? 'Booking...'
+                            : isBooked
+                            ? `${formatTime(time)} (Taken)`
+                            : formatTime(time)}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}

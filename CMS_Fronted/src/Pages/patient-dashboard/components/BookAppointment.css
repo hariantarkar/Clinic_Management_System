@@ -75,6 +75,96 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* Selected doctor row highlight */
+.ba-page .row-selected {
+  background: var(--blue-light);
+}
+
+/* Slot picker — one block per DoctorSlot window, with individual
+   bookable time buttons generated at appointmentDuration intervals */
+.ba-page .slot-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ba-page .slot-block {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.ba-page .slot-block-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 12px;
+}
+
+.ba-page .slot-time-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ba-page .slot-time-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--blue-primary);
+  background: #fff;
+  color: var(--blue-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.ba-page .slot-time-btn:hover:not(:disabled) {
+  background: var(--blue-primary);
+  color: #fff;
+}
+
+.ba-page .slot-time-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ba-page .slot-time-btn-taken {
+  border-color: var(--border-color);
+  background: #f1f5f9;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.ba-page .slot-time-btn-taken:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+/* Search bar above the doctor table */
+.ba-page .search-bar {
+  padding: 4px 16px 16px;
+}
+
+.ba-page .search-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.ba-page .search-input:focus {
+  outline: none;
+  border-color: var(--blue-primary);
+}
+
+/* Lighter pill variant used in the slots-available header */
+.ba-page .top-pill-light {
+  background: var(--blue-light);
+  color: var(--blue-primary);
+}
 #doctorNameINHead{
     text-align: left;
     margin-left: 80px;

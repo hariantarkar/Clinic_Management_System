@@ -148,10 +148,12 @@ export default function PendingDoctors() {
                       <div className="md-field">
                         <label>Name</label>
                         <input type="text" value={registration.name} disabled />
+                        {fieldErrors.dName && <span className="md-field-error">{fieldErrors.dName}</span>}
                       </div>
                       <div className="md-field">
                         <label>Email</label>
                         <input type="email" value={registration.email} disabled />
+                          {fieldErrors.email && <span className="md-field-error">{fieldErrors.email}</span>}
                       </div>
                       <div className="md-field">
                         <label>Contact Number</label>

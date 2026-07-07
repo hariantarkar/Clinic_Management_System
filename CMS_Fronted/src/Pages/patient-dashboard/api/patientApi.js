@@ -25,9 +25,11 @@ export async function getDoctorAvailability(doctorId) {
   return data;
 }
 
-/** POST /patient/book/{slotId}/{patientId} */
-export async function bookSlot(slotId, patientId) {
-  const { data } = await API.post(`/patient/book/${slotId}/${patientId}`);
+/** POST /patient/book/{slotId}/{patientId}?appointmentTime=... */
+export async function bookSlot(slotId, patientId, appointmentTime) {
+  const { data } = await API.post(`/patient/book/${slotId}/${patientId}`, null, {
+    params: { appointmentTime },
+  });
   return data;
 }
 

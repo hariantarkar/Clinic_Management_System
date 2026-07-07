@@ -108,4 +108,16 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         List<AppointmentEntity> findUpcomingActiveAppointmentsForDoctor(
                 @Param("doctorId") Long doctorId,
                 @Param("now") LocalDateTime now);
+    
+    boolean existsBySlot_SlotIdAndAppointmentDateAndStatus(
+            Long slotId,
+            LocalDateTime appointmentDate,
+            String status);
+    boolean existsByPatient_IdAndSlot_SlotIdAndStatusAndAppointmentDateAfter(
+            Integer patientId,
+            Long slotId,
+            String status,
+            LocalDateTime now);
+    
+    List<AppointmentEntity> findBySlot_SlotIdInAndStatus(List<Long> slotIds, String status);
 }
