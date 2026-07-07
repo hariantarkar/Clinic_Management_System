@@ -22,6 +22,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 		                           @Param("keyword") String keyword);
 	
 	Optional<Doctor> findByEmail(String email);
+	boolean existsByRegister_Id(int registerId);
 
  }
 

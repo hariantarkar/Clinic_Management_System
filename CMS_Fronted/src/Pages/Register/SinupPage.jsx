@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { registerUser } from "../../services/RegisterService";
 import "./SignupPage.css";
 
@@ -77,17 +77,38 @@ const IconHeartPulse = () => (
   </svg>
 );
 
+const IconStethoscope = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 4v6a4 4 0 0 0 8 0V4" />
+    <path d="M18 10v2a6 6 0 0 1-12 0v-2" />
+    <circle cx="18" cy="8" r="2" />
+  </svg>
+);
+
 export default function SignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // /signup?role=doctor sends a doctor registration; anything else (or
+  // absence of the param) defaults to a patient registration. This is
+  // just a signal for the admin's Pending Doctors review — it does NOT
+  // grant doctor access by itself. The backend is responsible for
+  // rejecting any role other than "patient"/"doctor" regardless of what
+  // is submitted here.
+  const roleParam = searchParams.get("role") === "doctor" ? "doctor" : "patient";
+  const isDoctorSignup = roleParam === "doctor";
+
   // 🔧 Keys here are sent as JSON to /auth/reg — they must match the field
   // names on your Java `Register` entity exactly (Jackson maps by name).
   // Your entity uses "name" and "contact" — already matched below.
-  // If you rename entity fields later, update these keys to match.
+  // "userType" tells the backend which role was requested; the backend
+  // must still validate/allow-list this value itself.
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     contact: "",
     password: "",
+    userType: roleParam,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -154,8 +175,13 @@ export default function SignupPage() {
       const response = await registerUser(formData);
 
       // Backend returns ResponseEntity<String> -> response.data is plain text
-      setSuccessMsg(response.data || "Account created successfully!");
-      setFormData({ name: "", email: "", contact: "", password: "" });
+      setSuccessMsg(
+        response.data ||
+          (isDoctorSignup
+            ? "Registration submitted! An admin will review and activate your doctor account."
+            : "Account created successfully!")
+      );
+      setFormData({ name: "", email: "", contact: "", password: "", userType: roleParam });
       setErrors({});
 
       // Send the user to the login page after a short delay
@@ -191,19 +217,30 @@ export default function SignupPage() {
       <div className="cms-card">
         {/* Left panel */}
         <div className="cms-panel cms-panel--left">
-          <div className="cms-icon-badge cms-icon-badge--blue">
-            <IconUserPlus />
+          <div className={`cms-icon-badge ${isDoctorSignup ? "cms-icon-badge--green" : "cms-icon-badge--blue"}`}>
+            {isDoctorSignup ? <IconStethoscope /> : <IconUserPlus />}
           </div>
 
           <h1 className="cms-title">
-            Join Clinic Management
-            <br />
-            System
+            {isDoctorSignup ? (
+              <>
+                Join as a Doctor
+                <br />
+                on Clinic CMS
+              </>
+            ) : (
+              <>
+                Join Clinic Management
+                <br />
+                System
+              </>
+            )}
           </h1>
 
           <p className="cms-subtext">
-            Create your patient account and securely manage appointments,
-            prescriptions, and medical history.
+            {isDoctorSignup
+              ? "Register your details below. An admin will review your registration and activate your doctor profile with your qualification, specialization, and consultation fee."
+              : "Create your patient account and securely manage appointments, prescriptions, and medical history."}
           </p>
 
           <div className="cms-features">
@@ -222,8 +259,14 @@ export default function SignupPage() {
                 <IconHeartPulse />
               </div>
               <div>
-                <div className="cms-feature-title">Easy Appointment Booking</div>
-                <div className="cms-feature-desc">Manage consultations effortlessly.</div>
+                <div className="cms-feature-title">
+                  {isDoctorSignup ? "Manage Your Patients" : "Easy Appointment Booking"}
+                </div>
+                <div className="cms-feature-desc">
+                  {isDoctorSignup
+                    ? "Slots, appointments, and prescriptions in one place."
+                    : "Manage consultations effortlessly."}
+                </div>
               </div>
             </div>
           </div>
@@ -231,9 +274,11 @@ export default function SignupPage() {
 
         {/* Right panel */}
         <div className="cms-panel cms-panel--right">
-          <h2 className="cms-welcome">Create Account</h2>
+          <h2 className="cms-welcome">{isDoctorSignup ? "Doctor Registration" : "Create Account"}</h2>
           <p className="cms-welcome-sub">
-            Register to access appointments, prescriptions, and medical records.
+            {isDoctorSignup
+              ? "Submit your details for admin approval to activate your doctor account."
+              : "Register to access appointments, prescriptions, and medical records."}
           </p>
 
           <form onSubmit={handleSubmit} className="cms-form">
@@ -345,7 +390,13 @@ export default function SignupPage() {
               className="cms-btn cms-btn--primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
+              {isSubmitting
+                ? isDoctorSignup
+                  ? "Submitting..."
+                  : "Creating Account..."
+                : isDoctorSignup
+                ? "Submit Registration"
+                : "Create Account"}
               {!isSubmitting && <IconArrowRight />}
             </button>
           </form>

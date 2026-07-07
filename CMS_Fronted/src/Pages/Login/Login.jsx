@@ -306,8 +306,26 @@ if (name) {
             <IconUserPlus />
             Create New Account
           </button>
+         
+
+<p className="cms-doctor-signup-link">
+  Registering as a doctor?{" "}
+  
+   <a href="#"
+    className="cms-link"
+    onClick={(e) => {
+      e.preventDefault();
+      navigate("/register?role=doctor");
+    }}
+  >
+    Sign up here
+  </a>
+</p>
+
         </div>
       </div>
     </div>
   );
 }
+         
+        

@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.CMS.AdminDashboard.DoctorRepository;
 import com.CMS.Config.JwtUtil;
 import com.CMS.LoginHandler.LoginResponse;
 import com.CMS.Register.entity.Register;
@@ -23,7 +24,10 @@ public class RegisterAuthenticated {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
-
+	
+@Autowired
+private DoctorRepository doctorRepository;
+	
 	@Autowired
 	private JwtUtil jwtUtil;
 
@@ -73,37 +77,39 @@ public class RegisterAuthenticated {
 	 * //return jwtUtil.generateToken(email); return jwtUtil.generateToken(
 	 * user.getEmail(), user.getUserType().name() ); }
 	 */
-	
 	public LoginResponse login(String email, String password) {
 
-		Register user = regRepo.findByEmail(email)
-		        .orElseThrow(() -> new RuntimeException("User not found"));
+	    Register user = regRepo.findByEmail(email)
+	            .orElseThrow(() -> new RuntimeException("User not found"));
 
-		try {
+	    try {
+	        authenticationManager.authenticate(
+	                new UsernamePasswordAuthenticationToken(
+	                        email,
+	                        password));
 
-		    authenticationManager.authenticate(
-		            new UsernamePasswordAuthenticationToken(
-		                    email,
-		                    password));
+	    } catch (BadCredentialsException e) {
+	        throw new RuntimeException("Invalid email or password");
+	    }
 
-		} catch (BadCredentialsException e) {
-		    throw new RuntimeException("Invalid email or password");
-		}
+	    // A "doctor" Register row only means the person requested doctor
+	    // access at signup — it doesn't grant it. Block login until an admin
+	    // has approved them by creating the matching Doctor profile.
+	    if (user.getUserType() == Register.UserType.doctor
+	            && !doctorRepository.existsByRegister_Id(user.getId())) {
+	        throw new RuntimeException("Your doctor registration is pending admin approval");
+	    }
 
-		String token = jwtUtil.generateToken(
-		            user.getEmail(),
-		            user.getUserType().name()
-		            
-		    );
+	    String token = jwtUtil.generateToken(
+	                user.getEmail(),
+	                user.getUserType().name()
+	        );
 
-		// 🔧 Build the full response here, while `user` is still in scope —
-		// this is the only place we actually know the role.
-		return new LoginResponse(
-				"Login Successful",
-				token,
-				user.getUserType().name(),
-				(long) user.getId(),
-				user.getName());
-		
+	    return new LoginResponse(
+	            "Login Successful",
+	            token,
+	            user.getUserType().name(),
+	            (long) user.getId(),
+	            user.getName());
 	}
-}
+	}

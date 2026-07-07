@@ -361,3 +361,9 @@
     font-size: 28px;
   }
 }
+.cms-doctor-signup-link {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 0.75rem;
+}
