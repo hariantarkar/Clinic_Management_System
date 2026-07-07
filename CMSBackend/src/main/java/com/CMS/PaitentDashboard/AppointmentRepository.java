@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.CMS.AdminSideEntity.Doctor;
 import com.CMS.Register.entity.Register;
@@ -96,4 +97,15 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
             Long doctorId,
             String status,
             LocalDateTime fromDateTime);
+    
+    @Query("""
+            SELECT a
+            FROM AppointmentEntity a
+            WHERE a.doctor.doctorId = :doctorId
+            AND a.appointmentDate >= :now
+            AND a.status NOT IN ('CANCELLED', 'COMPLETED')
+            """)
+        List<AppointmentEntity> findUpcomingActiveAppointmentsForDoctor(
+                @Param("doctorId") Long doctorId,
+                @Param("now") LocalDateTime now);
 }

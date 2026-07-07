@@ -1,0 +1,53 @@
+.rv-filters {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding-bottom: 0.75rem;
+}
+
+.rv-filters .md-field {
+  min-width: 180px;
+}
+
+.rv-filters select,
+.rv-filters input[type="date"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d9dde3;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.rv-big-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0;
+}
+
+.rv-result {
+  background: #f7f8fa;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.rv-result-name {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 0.35rem;
+}
+
+.rv-result-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}

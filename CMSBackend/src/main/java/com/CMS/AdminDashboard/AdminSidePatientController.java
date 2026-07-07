@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,16 +25,22 @@ public class AdminSidePatientController {
 	private AppointmentRepository AppointRepo;
 	@Autowired
 	private RegisterRepo registerRepository;
-	@GetMapping("/admin/upcomingAppointments")
-	public ResponseEntity<List<AppointmentEntity>> getAllUpcomingAppointments() {
+	@GetMapping("/admin/upcomingAppointments/{doctorId}")
+	public ResponseEntity<List<AppointmentEntity>> getUpcomingAppointments(
+	         @PathVariable Long doctorId) {
 
-	    return ResponseEntity.ok(
-	            AppointRepo.findByStatus("Booked")
-	    );
+	     LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+
+	     return ResponseEntity.ok(
+	             AppointRepo.findByDoctorDoctorIdAndStatusAndAppointmentDateGreaterThanEqual(
+	                     doctorId,
+	                     "BOOKED",
+	                     startOfToday
+	             )
+	     );
 	}
 	@GetMapping("/admin/totalRegisterPatients")
 	public ResponseEntity<?> getTotalPatients() {
-
 		long totalPatients =
 		        registerRepository.countByUserType(Register.UserType.patient);	    
 	    Map<String, Object> response = new HashMap<>();
@@ -66,10 +73,8 @@ public class AdminSidePatientController {
 	        @RequestParam String date) {
 
 	    LocalDate localDate = LocalDate.parse(date);
-
 	    LocalDateTime start = localDate.atStartOfDay();
 	    LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	    long totalCancelled =
 	            AppointRepo.countByStatusAndAppointmentDateBetween(
 	                    "CANCELLED",
@@ -79,7 +84,6 @@ public class AdminSidePatientController {
 	    Map<String, Object> response = new HashMap<>();
 	    response.put("date", date);
 	    response.put("totalCancelledAppointments", totalCancelled);
-
 	    return ResponseEntity.ok(response);
 	}
 }

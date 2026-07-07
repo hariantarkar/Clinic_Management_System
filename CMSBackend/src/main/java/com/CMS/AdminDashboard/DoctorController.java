@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.CMS.AdminSideEntity.Doctor;
+import com.CMS.PaitentDashboard.AppointmentEntity;
 import com.CMS.PaitentDashboard.AppointmentRepository;
 import com.CMS.Register.entity.Register;
 import com.CMS.RegisterRepository.RegisterRepo;
@@ -47,18 +48,51 @@ public class DoctorController {
 	     if (doctorRepository.findByEmail(doctor.getEmail()).isPresent()) {
 	         throw new RuntimeException("Doctor already exists in system");
 	     }
-
 	     return ResponseEntity.status(HttpStatus.CREATED)
 	             .body(doctorService.addDoctor(doctor));
 	 }
+	 @Autowired
+	 private jakarta.validation.Validator validator;
+
+	 @PostMapping("/admin/addDoctorFromRegistration/{registerId}")
+	 public ResponseEntity<?> addDoctorFromRegistration(
+	         @PathVariable int registerId,
+	         @RequestBody Doctor doctorDetails) {   // <-- @Valid removed here
+
+	     Register register = registerRepository.findById(registerId)
+	             .orElseThrow(() -> new RuntimeException("Registration not found"));
+
+	     if (register.getUserType() != Register.UserType.doctor) {
+	         throw new RuntimeException("This registration is not a doctor registration");
+	     }
+
+	     if (doctorRepository.findByEmail(register.getEmail()).isPresent()) {
+	         throw new RuntimeException("Doctor already exists in system");
+	     }
+
+	     doctorDetails.setdName(register.getName());
+	     doctorDetails.setEmail(register.getEmail());
+	     doctorDetails.setRegister(register);
+	     if (doctorDetails.getActive() == null) {
+	         doctorDetails.setActive(true);
+	     }
+
+	     // manual validation now that dName/email are populated
+	     var violations = validator.validate(doctorDetails);
+	     if (!violations.isEmpty()) {
+	         Map<String, String> errors = new HashMap<>();
+	         violations.forEach(v -> errors.put(v.getPropertyPath().toString(), v.getMessage()));
+	         return ResponseEntity.badRequest().body(errors);
+	     }
+
+	     return ResponseEntity.status(HttpStatus.CREATED)
+	             .body(doctorService.addDoctor(doctorDetails));
+	 }
 	 @GetMapping("/admin/totalDoctors")
 	 public ResponseEntity<?> getTotalDoctors() {
-
 	     long totalDoctors = doctorRepository.count();
-
 	     Map<String, Object> response = new HashMap<>();
 	     response.put("totalDoctors", totalDoctors);
-
 	     return ResponseEntity.ok(response);
 	 }
 	 @GetMapping("/admin/getAllDoctors")
@@ -69,7 +103,7 @@ public class DoctorController {
 	 public ResponseEntity<Doctor> getDoctorById(@PathVariable Long doctorId) {
 	     return ResponseEntity.ok(doctorService.getDoctorById(doctorId));
 	 }
-	 @PatchMapping("/admin/updateDoctor/{doctorId}")
+	 @PutMapping("/admin/updateDoctor/{doctorId}")
 	 public ResponseEntity<Doctor> updateDoctor(
 	         @PathVariable Long doctorId,
 	         @RequestBody Doctor doctor) {
@@ -85,34 +119,27 @@ public class DoctorController {
 
 	     return ResponseEntity.ok("Doctor deleted successfully");
 	 }
-	 
 	 @GetMapping("/admin/completedCheckupsByDoctor")
 	 public ResponseEntity<?> getCompletedCheckupsByDoctor(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
-
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	     LocalDate localDate = LocalDate.parse(date);
-
 	     LocalDateTime start = localDate.atStartOfDay();
 	     LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	     long totalCompleted =
 	             AppointRepo.countByDoctorDoctorIdAndStatusAndAppointmentDateBetween(
 	                     doctorId,
 	                     "COMPLETED",
 	                     start,
 	                     end);
-
 	     Map<String, Object> response = new HashMap<>();
 	     response.put("doctorId", doctor.getDoctorId());
 	     response.put("doctorName", doctor.getdName());
 	     response.put("doctorEmail", doctor.getEmail());
 	     response.put("date", date);
 	     response.put("totalCompletedCheckups", totalCompleted);
-
 	     return ResponseEntity.ok(response);
 	 }
 	 @GetMapping("/admin/cancelledAppointmentsByDoctor")
@@ -122,12 +149,9 @@ public class DoctorController {
 
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	     LocalDate localDate = LocalDate.parse(date);
-
 	     LocalDateTime start = localDate.atStartOfDay();
 	     LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	     long totalCancelled =
 	             AppointRepo.countByDoctorDoctorIdAndStatusAndAppointmentDateBetween(
 	                     doctorId,
@@ -141,23 +165,17 @@ public class DoctorController {
 	     response.put("doctorEmail", doctor.getEmail());
 	     response.put("date", date);
 	     response.put("totalCancelledAppointments", totalCancelled);
-
 	     return ResponseEntity.ok(response);
 	 }
-	 
 	 @GetMapping("/admin/dayWiseTotalAppointments")
 	 public ResponseEntity<?> getDayWiseTotalAppointments(
 	         @RequestParam Long doctorId,
 	         @RequestParam String date) {
-
 	     Doctor doctor = doctorRepository.findById(doctorId)
 	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
 	     LocalDate localDate = LocalDate.parse(date);
-
 	     LocalDateTime start = localDate.atStartOfDay();
 	     LocalDateTime end = localDate.atTime(23, 59, 59);
-
 	     long totalAppointments =
 	    		 AppointRepo
 	                     .countByDoctorDoctorIdAndAppointmentDateBetween(
@@ -172,5 +190,36 @@ public class DoctorController {
 	     response.put("totalAppointments", totalAppointments);
 
 	     return ResponseEntity.ok(response);
+	 }
+	 @GetMapping("/admin/pendingDoctors")
+	 public ResponseEntity<List<Register>> getPendingDoctors() {
+
+	     List<Register> pendingDoctors =
+	             registerRepository.findPendingDoctorRegistrations();
+
+	     return ResponseEntity.ok(pendingDoctors);
+	 }
+	 @PutMapping("/admin/setDoctorActiveStatus/{doctorId}")
+	 public ResponseEntity<?> setDoctorActiveStatus(
+	         @PathVariable Long doctorId,
+	         @RequestParam boolean active) {
+
+	     Doctor doctor = doctorRepository.findById(doctorId)
+	             .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+	     if (!active) {
+	         List<AppointmentEntity> upcoming =
+	        		 AppointRepo.findUpcomingActiveAppointmentsForDoctor(doctorId, LocalDateTime.now());
+
+	         if (!upcoming.isEmpty()) {
+	             throw new RuntimeException(
+	                 "Cannot deactivate doctor: has " + upcoming.size() + " current or upcoming appointment(s)"
+	             );
+	         }
+	     }
+
+	     doctor.setActive(active);
+	     doctorRepository.save(doctor);
+	     return ResponseEntity.ok(doctor);
 	 }
 }

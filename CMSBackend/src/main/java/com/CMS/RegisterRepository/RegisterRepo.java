@@ -21,6 +21,15 @@ public interface RegisterRepo extends JpaRepository<Register,Integer>{
 	
 	long countByUserType(Register.UserType userType);
 
-
+	@Query("""
+			SELECT r
+			FROM Register r
+			WHERE r.userType = com.CMS.Register.entity.Register$UserType.doctor
+			AND r.id NOT IN (
+			    SELECT d.register.id
+			    FROM Doctor d
+			)
+			""")
+			List<Register> findPendingDoctorRegistrations();
 
 }

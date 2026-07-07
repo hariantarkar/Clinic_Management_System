@@ -19,17 +19,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Autowired
 	RegisterRepo regRepo;
 
-	
-	/*
-	 * @Override public UserDetails loadUserByUsername(String email) throws
-	 * UsernameNotFoundException { Register user = regRepo.findByEmail(email);
-	 * System.out.println("Role = " + user.getUserType()); if (user == null) { throw
-	 * new UsernameNotFoundException("User not found"); }
-	 * 
-	 * return new User( user.getEmail(), user.getPassword(), Arrays.asList( new
-	 * SimpleGrantedAuthority( "ROLE_" + user.getUserType().name().toUpperCase() ) )
-	 * ); }
-	 */
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 

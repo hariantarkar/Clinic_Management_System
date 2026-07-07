@@ -32,13 +32,6 @@ public class JwtFilter extends OncePerRequestFilter {
 		System.out.println("SecurityConfig Loaded");
 		String path = request.getServletPath();
 
-		// Skip login and register APIs
-		/*
-		 * if (path.equals("/auth/login") || path.equals("/auth/test") ||
-		 * path.equals("/auth/reg")) {
-		 * 
-		 * filterChain.doFilter(request, response); return; }
-		 */
 		if (path.startsWith("/auth/")) {
 			 System.out.println("Skipping JWT for: " + path);
 		    filterChain.doFilter(request, response);

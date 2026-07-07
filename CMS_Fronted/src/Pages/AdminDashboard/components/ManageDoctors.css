@@ -1,0 +1,101 @@
+.md-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 18px 0 22px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 18px;
+}
+
+.md-edit-form {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding: 16px 18px;
+  background: var(--bg-page);
+  border-radius: 10px;
+}
+
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md-field label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.md-field input {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.md-field input:focus {
+  outline: none;
+  border-color: var(--blue-primary);
+}
+
+.md-field-error {
+  font-size: 12px;
+  color: var(--red);
+}
+
+.md-submit-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.md-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.md-item {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.md-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 0.9fr 0.9fr 0.9fr 1.6fr;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.md-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-primary);
+}
+
+.md-row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.md-delete-btn {
+  color: var(--red);
+}
+
+@media (max-width: 900px) {
+  .md-row {
+    grid-template-columns: 1fr;
+  }
+
+  .md-row-actions {
+    justify-content: flex-start;
+  }
+}

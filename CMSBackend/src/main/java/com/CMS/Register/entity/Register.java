@@ -41,8 +41,8 @@ public class Register {
 	private String email;
 	@NotBlank(message = "Contact number is required")
 	@Pattern(
-	    regexp = "^[0-9]{10}$",
-	    message = "Contact number must be exactly 10 digits"
+			regexp = "^[6-9]\\d{9}$",
+    	    message = "Contact number must be a valid 10-digit Indian mobile number"
 	)
 	@Column(name = "contact", unique = true, nullable = false)
 	private String contact;

@@ -1,0 +1,78 @@
+.dsp-panel {
+  border-top: 1px solid var(--border-color);
+  padding: 18px;
+  background: var(--bg-page);
+}
+
+.dsp-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.dsp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.dsp-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.dsp-field input {
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 13.5px;
+  width: 100%;
+}
+
+.dsp-field input:focus {
+  outline: none;
+  border-color: var(--blue-primary);
+}
+
+.dsp-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dsp-slot-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.dsp-slot-time {
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 13.5px;
+}
+
+.dsp-slot-meta {
+  font-size: 12.5px;
+  color: var(--text-gray);
+  flex: 1;
+}
+
+.dsp-arrow {
+  color: var(--text-light-gray);
+}
+
+.dsp-row-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
