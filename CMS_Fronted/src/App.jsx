@@ -12,12 +12,13 @@ import ResetPasswordPage from './Pages/Password/ResetPasswordPage.jsx'
 import AdminDashboard from './Pages/AdminDashboard/AdminDashboard.jsx'
 import DoctorDashboard from './Pages/DoctorDashboard/DoctorDashboard.jsx'
 import PatientDashboard from './Pages/patient-dashboard/PatientDashboard.jsx'
-
+import HomePage from './Pages/HomePage.jsx'
 function App() {
 
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -27,8 +28,9 @@ function App() {
         <Route path="/doctor" element={<DoctorDashboard />} />
         <Route path="/patient" element={<PatientDashboard />} />
 
-        {/* Any unknown path falls back to the login page */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Any unknown path falls back to the login page 
+         />*/}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
 
