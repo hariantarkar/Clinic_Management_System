@@ -60,14 +60,3 @@ public class PatientService {
     }
 	
 }
-
-/*
- * public List<DoctorSlot> getAvailableSlots(Long doctorId) { return
- * doctorSlotRepository.findByDoctorDoctorIdAndAvailableTrue(doctorId); }
- */    
-/*
- * public List<DoctorSlot> getAvailableSlots(Long doctorId) {
- * 
- * return doctorSlotRepository
- * .findByDoctorDoctorIdAndAvailableTrueOrderByStartTimeAsc(doctorId); }
- */

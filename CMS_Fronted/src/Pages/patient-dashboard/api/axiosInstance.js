@@ -45,19 +45,3 @@ API.interceptors.response.use(
   }
 );
 export default API;
-
-/*
-API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const data = error.response?.data;
-    let message;
-    if (typeof data === "string" && data) {
-      message = data;
-    } else if (data && typeof data === "object") {
-      message = data.message || data.error;
-    }
-    return Promise.reject(new Error(message || error.message || "Something went wrong. Please try again."));
-  }
-);
-*/

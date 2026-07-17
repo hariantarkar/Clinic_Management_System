@@ -314,7 +314,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <div className="hp-demo-doctor-name">Dr.Hari Antarkar </div>
-                  <div className="hp-demo-doctor-role">Ophthalmology (Eye Specialist)· 20-min slots</div>
+                  <div className="hp-demo-doctor-role">Ophthalmology (Eye Specialist)· 30-min slots</div>
                 </div>
                 <div className="hp-demo-date">
                   <IconCalendar />

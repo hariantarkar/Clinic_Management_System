@@ -8,5 +8,4 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
 
 	 List<Medicine> findByPrescriptionPrescriptionId(Long prescriptionId);
 	 List<Medicine> findByPrescription_Patient_Id(Integer patientId);
-	// List<Medicine> findByPrescription_Patient_Id(Integer patientId);
 }

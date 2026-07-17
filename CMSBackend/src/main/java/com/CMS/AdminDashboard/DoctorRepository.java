@@ -26,6 +26,4 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
  }
 
-//List<DoctorSlot> findByDoctorDoctorIdAndAvailableTrue(Long doctorId);
-
 

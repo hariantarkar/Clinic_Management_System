@@ -33,16 +33,3 @@ public class LoginController {
 	
 
 }
-
-/*
- * @PostMapping("/auth/login") public ResponseEntity<LoginResponse> login(
- * 
- * @Valid @RequestBody LoginRequest request) {
- * 
- * String token = authService.login( request.getEmail(), request.getPassword());
- * 
- * LoginResponse response = new LoginResponse("Login Successfull", token);
- * 
- * response.setMessage("Login Successful"); response.setToken(token); return
- * ResponseEntity.ok(response); }
- */

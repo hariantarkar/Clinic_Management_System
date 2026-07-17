@@ -33,15 +33,11 @@ public class JwtFilter extends OncePerRequestFilter {
 		String path = request.getServletPath();
 
 		if (path.startsWith("/auth/")) {
-			 System.out.println("Skipping JWT for: " + path);
 		    filterChain.doFilter(request, response);
 		    return;
 		}
-
 		String authHeader = request.getHeader("Authorization");
-
 		String username = null;
-
 		try {
 
 			System.out.println("Path = " + path);
@@ -73,15 +69,11 @@ public class JwtFilter extends OncePerRequestFilter {
 			}
 
 		} catch (Exception e) {
-
-			System.out.println("JWT Error : " + e.getMessage());
-
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			response.getWriter().write(e.getMessage());
 
 			return;
 		}
-
 		filterChain.doFilter(request, response);
 	}
 }

@@ -17,14 +17,12 @@ public class JwtVerifyController {
 
 	@PostMapping("/auth/genToken")
 	public String craeteToken(@RequestBody Register register) {
-		System.out.println("Username = " + register.getName());
 		String token = jwtutil.generateToken(register.getName(), register.getUserType().name());
 		return token;
 	}
 
 	@GetMapping("/auth/verify")
 	public String verifyToken(@RequestHeader("Authorization") String authorization) {
-
 		return jwtutil.verifyToken(authorization);
 
 	}
