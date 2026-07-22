@@ -1,0 +1,12 @@
+package com.CMS.Register.entity;
+
+public enum Intent {
+	 	EMERGENCY,
+	    SERVICE_UNAVAILABLE,
+	    UPCOMING_APPOINTMENT,
+	    PRESCRIPTION_HISTORY,
+	    BOOK_APPOINTMENT_HELP,
+	    CANCEL_APPOINTMENT_HELP,
+	    PASSWORD_HELP,
+	    FALLBACK
+}

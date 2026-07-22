@@ -4,6 +4,7 @@ import BookAppointment from './components/BookAppointment';
 import MyAppointments from './components/MyAppointments';
 import MyPrescriptions from './components/MyPrescriptions';
 import MedicalRecords from './components/MedicalRecords';
+import ChatWidget from "./components/ChatWidget"
 import { MenuIcon } from './components/icons';
 import './PatientDashboard.css';
 
@@ -25,6 +26,15 @@ export default function PatientDashboard() {
   const patientName = localStorage.getItem('patientName') || 'Patient';
 
   const handleLogout = () => {
+
+     const currentPatientId = localStorage.getItem('patientId');
+ 
+      // Clear the active chat session so the next login starts fresh.
+      // The old conversation still exists in the database and remains
+      // fully visible to admin — this only resets what the WIDGET resumes.
+      if (currentPatientId) {
+        sessionStorage.removeItem(`clinic_chat_session_${currentPatientId}`);
+      }
     localStorage.removeItem('token');
     localStorage.removeItem('patientId');
     localStorage.removeItem('patientName');
@@ -56,6 +66,7 @@ export default function PatientDashboard() {
       <main className="main-content">
         <ActiveComponent patientId={patientId} />
       </main>
+       <ChatWidget patientId={patientId} /> 
     </div>
   );
 }

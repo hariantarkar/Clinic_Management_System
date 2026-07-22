@@ -1,5 +1,5 @@
 import React from 'react';
-import { MenuIcon, LogoutIcon } from '../../patient-dashboard/components/icons';
+import { MenuIcon, LogoutIcon, AlertTriangleIcon } from '../../patient-dashboard/components/icons';
 import './AdminSidebar.css';
 
 function ChartIcon(props) {
@@ -34,11 +34,12 @@ const NAV_ITEMS = [
   { key: 'overview', label: 'Overview', icon: ChartIcon },
   { key: 'doctors', label: 'Manage Doctors', icon: StethoscopeIcon },
   { key: 'pendingDoctors', label: 'Pending Doctors', icon: StethoscopeIcon },
-   { key: 'appointments', label: 'Appointments', icon: ChartIcon },
-  { key: 'revenue', label: 'Revenue', icon: RupeeSideIcon }
+  { key: 'appointments', label: 'Appointments', icon: ChartIcon },
+  { key: 'revenue', label: 'Revenue', icon: RupeeSideIcon },
+  { key: 'supportChats', label: 'Support Chats', icon: AlertTriangleIcon },
 ];
 
-export default function AdminSidebar({ activeView, onNavigate, adminName, onLogout, isOpen, onToggle }) {
+export default function AdminSidebar({ activeView, onNavigate, adminName, onLogout, isOpen, onToggle, emergencyCount = 0 }) {
   return (
     <aside className={`sidebar ${isOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
       <div className="sidebar-header">
@@ -60,6 +61,9 @@ export default function AdminSidebar({ activeView, onNavigate, adminName, onLogo
           >
             <Icon className="nav-icon" />
             <span>{label}</span>
+            {key === 'supportChats' && emergencyCount > 0 && (
+              <span className="nav-badge">{emergencyCount}</span>
+            )}
           </button>
         ))}
       </nav>
