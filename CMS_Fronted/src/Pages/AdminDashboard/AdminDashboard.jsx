@@ -8,7 +8,7 @@ import RevenueReports from './components/RevenueReports';
 import SupportChats from './components/SupportChats';
 import { MenuIcon } from '../patient-dashboard/components/icons';
 import { getActiveEmergencies } from '../AdminDashboard/Api/Adminchatapi';
-import "./AdminDashBoard.css";
+import "./AdminDashboard.css";
 
 const VIEWS = {
   overview: AdminOverview,
