@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getUpcomingAppointments } from '../api/doctorApi';
+import { getUpcomingAppointments } from "../Api/Doctorapi"//'../api/doctorApi';
 import EmptyState from '../../patient-dashboard/components/EmptyState';
 import ConsultationPanel from './ConsultationPanel';
 import PatientHistoryPanel from './PatientHistoryPanel';
