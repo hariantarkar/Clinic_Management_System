@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getDayWiseTotalAppointments, getCompletedCheckups, getCancelledAppointments } from '../api/doctorApi';
+import { getDayWiseTotalAppointments, getCompletedCheckups, getCancelledAppointments } from '../Api/DoctorApi';
 import { ClipboardListIcon, CalendarCheckIcon } from '../../patient-dashboard/components/icons';
-import './DoctorOverview.css';
+import './DoctorOverView.css';
 
 function XCircleIcon(props) {
   return (

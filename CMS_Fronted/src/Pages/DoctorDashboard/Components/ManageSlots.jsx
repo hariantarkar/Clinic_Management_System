@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { addSlot, getUpcomingSlots, updateSlot } from '../api/doctorApi';
+import { addSlot, getUpcomingSlots, updateSlot } from '../Api/DoctorApi';
 import EmptyState from '../../patient-dashboard/components/EmptyState';
 import { CalendarPlusIcon } from '../../patient-dashboard/components/icons';
 import './ManageSlots.css';

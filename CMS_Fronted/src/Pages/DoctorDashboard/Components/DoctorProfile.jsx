@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { updateProfile } from '../api/doctorApi';
+import { updateProfile } from '../Api/DoctorApi';
 import './DoctorProfile.css';
 
 function UserIcon(props) {

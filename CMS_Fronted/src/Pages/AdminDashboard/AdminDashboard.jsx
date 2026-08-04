@@ -3,7 +3,7 @@ import AdminSidebar from './components/AdminSideBar';
 import AdminOverview from './components/AdminOverView';
 import ManageDoctors from './components/ManageDoctors';
 import PendingDoctors from './components/PendingDoctors';
-import AppointmentsOverview from './components/AppointmentsOverview';
+import AppointmentsOverview from './components/AppointmentsOverView';
 import RevenueReports from './components/RevenueReports';
 import SupportChats from './components/SupportChats';
 import { MenuIcon } from '../patient-dashboard/components/icons';
