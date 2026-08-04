@@ -29,7 +29,12 @@ public class RegisterController {
 	 * 
 	 * }
 	 */
-	
+	@PostMapping("/auth/create-first-admin")
+	public ResponseEntity<String> createFirstAdmin(@Valid @RequestBody Register register) {
+	    register.setUserType(Register.UserType.admin);
+	    String msg = authService.register(register);
+	    return new ResponseEntity<>(msg, HttpStatus.CREATED);
+	}
 	@PostMapping("/auth/reg")
 	public ResponseEntity<String> registerUser(@Valid @RequestBody Register register) {
 
