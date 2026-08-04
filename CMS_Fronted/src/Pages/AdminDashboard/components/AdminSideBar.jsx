@@ -1,6 +1,6 @@
 import React from 'react';
 import { MenuIcon, LogoutIcon, AlertTriangleIcon } from '../../patient-dashboard/components/icons';
-import './AdminSideBar.css';
+import "./AdminSideBar.css";
 
 function ChartIcon(props) {
   return (
