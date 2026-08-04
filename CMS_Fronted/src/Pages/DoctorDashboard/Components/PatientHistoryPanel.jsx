@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getLastVisit, getPatientPrescriptions, getMedicinesByPatient } from '../api/doctorApi';
+import { getLastVisit, getPatientPrescriptions, getMedicinesByPatient } from "../Api/Doctorapi";//'../api/doctorApi';
 import './PatientHistoryPanel.css';
 
 function PillIcon(props) {

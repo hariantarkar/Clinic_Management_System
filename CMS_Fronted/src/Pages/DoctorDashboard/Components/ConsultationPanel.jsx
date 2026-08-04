@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { addPrescription, addMedicine, completeConsultation, getPatientPrescriptions } from "../Api/Doctorapi"//'../api/doctorApi';
+import { addPrescription, addMedicine, completeConsultation, getPatientPrescriptions } from "../Api/Doctorapi";
 import "./ConsultationPanel.css";
 
 function PillIcon(props) {

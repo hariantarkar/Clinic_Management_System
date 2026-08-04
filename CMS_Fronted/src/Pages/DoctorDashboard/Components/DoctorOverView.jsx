@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { getDayWiseTotalAppointments, getCompletedCheckups, getCancelledAppointments } from "../Api/Doctorapi"//'../Api/DoctorApi';
+import { getDayWiseTotalAppointments, getCompletedCheckups, getCancelledAppointments } from "../Api/Doctorapi";
 import { ClipboardListIcon, CalendarCheckIcon } from '../../patient-dashboard/components/icons';
 import './DoctorOverView.css';
 
