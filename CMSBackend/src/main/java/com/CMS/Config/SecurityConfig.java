@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login",
                                 "/auth/reg",
                                 "/auth/forgot-password",
-                                "/auth/reset-password").permitAll()
+                                "/auth/reset-password","/auth/create-first-admin").permitAll()
                         .requestMatchers("/admin/**")
                         .hasRole("ADMIN")
                         
