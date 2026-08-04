@@ -10,7 +10,8 @@ import {
   getCompletedCheckupsByDoctor,
 } from '../Api/AdminApi';
 import { BriefcaseIcon } from '../../patient-dashboard/components/icons';
-import "./AppointmentsOverView.css"
+//import "./AppointmentsOverView.css"
+import "./AppointmentsOverView.css";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);

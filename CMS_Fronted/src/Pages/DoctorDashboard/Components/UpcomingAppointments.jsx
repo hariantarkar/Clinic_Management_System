@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { getUpcomingAppointments } from "../Api/Doctorapi";
 import EmptyState from '../../patient-dashboard/components/EmptyState';
-import ConsultationPanel from "./Consultationpanel";
+import ConsultationPanel from "./ConsultationPanel";
 import PatientHistoryPanel from './PatientHistoryPanel';
 import { ClipboardListIcon } from '../../patient-dashboard/components/icons';
 import './UpcomingAppointments.css';
