@@ -45,3 +45,4 @@ API.interceptors.response.use(
   }
 );
 export default API;
+console.log("API BASE URL IS:", import.meta.env.VITE_API_BASE_URL);
