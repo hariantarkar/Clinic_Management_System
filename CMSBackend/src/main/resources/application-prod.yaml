@@ -23,6 +23,12 @@ spring:
           auth: true
           starttls:
             enable: true
+
+  brevo:
+   api:
+    key: ${BREVO_API_KEY}
+   sender:
+    email: ${BREVO_SENDER_EMAIL}
 logging:
   level:
     org.hibernate.SQL: DEBUG
